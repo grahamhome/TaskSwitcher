@@ -2,6 +2,7 @@ package code;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 /**
  * This class creates and stores the data to be used in the experiment:
@@ -25,7 +26,7 @@ public class TaskData {
 	 * 
 	 * But beware! Each number in this section MUST be even.
 	 * This is necessary to ensure there are an exactly equal number of
-	 * "expected" and "unexpected" task switches in each block.
+	 * congruent and incongruent trials in each block.
 	 * You've been warned!
 	 */
 	
@@ -84,7 +85,7 @@ public class TaskData {
 	
 	/*
 	 * Input Keys:
-	 * Feel free to change each of these to any single key you can 
+	 * Feel free to change each of these to any individual key you can 
 	 * press on your keyboard (key combinations are not supported).
 	 */
 	
@@ -174,6 +175,11 @@ public class TaskData {
 				numTrials = n;
 			}
 			
+			@Override
+			public String toString() {
+				return name().toLowerCase().replace("_", ", ");
+			}
+			
 		}
 		// The type of this particular block
 		public Type type;
@@ -190,52 +196,60 @@ public class TaskData {
 			// Here we generate the specified number of predictably-placed trials.
 			if (type.equals(Type.PRACTICE_PREDICTABLE) || type.equals(Type.EXPERIMENTAL_PREDICTABLE)) {
 				for (int i=0; i<type.numTrials; i++) {
-					trials.add(new Trial((quadrant++)%4));
+					trials.add(new Trial((quadrant++)%4, flip()));
+					/**
+					 * TODO: I may need to change this so that the same number of congruent & incongruent
+					 * trials are created, using the same method I use for the random blocks. I am waiting
+					 * to hear back about this.
+					 */
 				}
 			} else {
 				/*
 				 * Here we generate the specified number of randomly-placed trials.
-				 * We need to make sure that exactly half of these trials are "unexpected" - that is, the trial
-				 * will not appear on the same side of the x-axis as the previous trial. (TODO: unless it's that the correct
-				 * button press for the trial is not the same as the correct button press for the previous trial.)
-				 * This process is a little complex, but I've described it below as best as I can.
+				 * We need to make sure that exactly half of these trials are "incongruent" - that is,
+				 * the key that would be pressed for the letter option is different from the key that 
+				 * would be pressed for the number option. The other half of the trials must be congruent - 
+				 * that is, the same key could be pressed for both the letter and the number option. 
+				 * Congruent and incongruent trials must be randomly distributed throughout the trial sequence.
 				 * 
-				 * To start, we generate a list of the indexes of all the trials which will be in the list, except
-				 * for the first index. The first trial is inherently unexpected: since there is no previous trial, 
-				 * the subject cannot possibly anticipate what is coming next.
+				 * To start, we generate a list of the indexes of all the trials which will be in the list.
 				 */
-				ArrayList<Integer> checkpoints = new ArrayList<Integer>(type.numTrials);
-				for (int i=1; i<type.numTrials; i++) {
-					checkpoints.add(i);
+				ArrayList<Integer> trialIndices = new ArrayList<Integer>(type.numTrials);
+				for (int i=0; i<type.numTrials; i++) {
+					trialIndices.add(i);
 				}
 				// Next, we randomly shuffle this list of indexes.
-				Collections.shuffle(checkpoints);
+				Collections.shuffle(trialIndices);
 				/*
-				 * Then we take a subset of the shuffled indexes that has a size one less than half the total
-				 * number of indexes. These will be the indexes of our "unexpected" trials. Since the first
-				 * trial is always unexpected, you can undoubtedly see that there will be an equal number of 
-				 * expected and unexpected trials. (Or you can just take my word for it.)
+				 * Then we take a subset of the shuffled indexes that is one half of the size of the total
+				 * number of indexes. The random indexes in this new list will be the locations of the 
+				 * congruent trials in the trial sequence to be generated. All indexes not in this list will
+				 * be the locations of the incongruent trials in the trial sequence.
 				 */
-				checkpoints = (ArrayList<Integer>) checkpoints.subList(0, (type.numTrials/2)-1);
-				/*
-				 * Now we build our list of trials. For each trial which we have designated as "unexpected",
-				 * we must ensure that it does not appear on the same half of the quadrant at the trial before it.
-				 */
+				List<Integer> congruentTrialIndices = trialIndices.subList(0, (type.numTrials/2));
+				// Now the sequence of trials is generated.
 				for (int i=0; i<type.numTrials; i++) {
 					quadrant = randomizer.nextInt(3);
 					if (i > 0) {
-						int prevQuadrant = trials.get(i-1).position.value;
-						/*
-						 * TODO: This loop will need to be changed if it turns out the point of "unexpected" 
-						 * trials is that the same button will not be pressed twice in a row.
-						 */
-						while (quadrant == prevQuadrant || (checkpoints.contains(i) && (quadrant < 2 && prevQuadrant < 2) || (quadrant >=2 && prevQuadrant >= 2))) {
+						// Here we ensure that this trial is in a different position than the last one.
+						while (quadrant == trials.get(i-1).position.value) {
 							quadrant = randomizer.nextInt(3);
 						}
 					}
-					trials.add(new Trial(quadrant));
+					// Here we generate the new trial, specifying both its position and its congruence or incongruence.
+					trials.add(new Trial(quadrant, congruentTrialIndices.contains(i)));
 				}
 			}
+		}
+		
+		@Override
+		public String toString() {
+			StringBuilder blockString = new StringBuilder(type.toString());
+			blockString.append(System.lineSeparator());
+			for (Trial trial : trials) {
+				blockString.append(trial.toString());
+			}
+			return blockString.append(System.lineSeparator()).toString();
 		}
 	}
 	
@@ -256,6 +270,10 @@ public class TaskData {
 			private Position(int v) {
 				this.value = v;
 			}
+			@Override
+			public String toString() {
+				return name().toLowerCase().replace("_",  " ");
+			}
 		}
 		// The position of this particular trial
 		public Position position;
@@ -265,6 +283,15 @@ public class TaskData {
 		public char number;
 		// The correct response to this trial
 		public char correctReponse;
+		/*
+		 * If this variable is set to 'true', the trial will be congruent.
+		 * This means that its letter and number will both correspond to the
+		 * same key press. 
+		 * If this variable is set to 'false', the trial will be incongruent.
+		 * In other words, its letter and number will correspond to different
+		 * key presses.
+		 */
+		public boolean congruent;
 		
 		// The letter which was generated most recently (so it won't be used in the next trial to be generated)
 		// Starts as '@', which is why that may not be included in the list of letters at the top of this file.
@@ -274,15 +301,26 @@ public class TaskData {
 		private static char lastNumber = '@';
 		
 		/**
-		 * This creates a trial with the specified position.
-		 * @param quadrant : A number 0-3 where 0 = upper left, 1 = upper right, 2 = lower right, 3 = lower left
+		 * This creates a congruent or incongruent trial with the specified position.
+		 * @param quadrant : A number 0-3 where 0 = upper left, 1 = upper right, 2 = lower right, 3 = lower left.
+		 * @param isCongruent : True for a congruent trial, false for an incongruent trial.
 		 */
-		public Trial(int quadrant) {
+		public Trial(int quadrant, boolean isCongruent) {
+			// Assign the trial's congruence or incongruence as specified.
+			congruent = isCongruent;
 			// Randomly decide if the trial will contain a vowel or consonant.
 			boolean hasVowel = flip();
 			char[] letters = (hasVowel ? VOWELS : CONSONANTS);
-			// Randomly decide if the trial will contain an odd or even number.
-			boolean hasOdd = flip();
+			/*
+			 * Now we know if the trial must contain an odd or even number 
+			 * in order to be congruent or incongruent as specified.
+			 */
+			boolean hasOdd = false;
+			if ((congruent && hasVowel) || (!congruent && !hasVowel)) {
+				hasOdd = (VOWEL_KEY == ODD_KEY);
+			} else {
+				hasOdd = (CONSONANT_KEY == ODD_KEY);
+			}
 			char[] numbers = (hasOdd ? ODDS : EVENS);
 			letter = lastLetter;
 			number = lastNumber;
@@ -320,6 +358,12 @@ public class TaskData {
 				correctReponse = (hasOdd ? ODD_KEY : EVEN_KEY);
 				break;
 			}
+		}
+		
+		@Override
+		public String toString() {
+			StringBuilder trialString = new StringBuilder();
+			return trialString.append(letter).append(number).append(", ").append(position.toString()).append(System.lineSeparator()).toString();
 		}
 	}
 }
