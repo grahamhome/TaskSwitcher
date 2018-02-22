@@ -21,7 +21,7 @@ public class TaskSwitcher {
 	private static void test() {
 		try {
 			PrintWriter outputWriter = new PrintWriter("C:/Users/Graham/TaskSwitcherTestOutputLong.txt", "UTF-8");
-			for (Block block : TaskData.createExperiment()) {
+			for (Block block : TaskData.createExperiment(true)) {
 				outputWriter.write(block.toString());
 			}
 			outputWriter.close();

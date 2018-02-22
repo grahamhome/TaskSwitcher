@@ -128,9 +128,11 @@ public class TaskData {
 	
 	/**
 	 * This is a method to generate the 4 blocks of trials in an experiment.
+	 * @param randomFirst : Specifies whether the blocks with randomly-placed trials 
+	 * should come first (true) or second (false).
 	 * @return : Returns a list of blocks.
 	 */
-	public static ArrayList<Block> createExperiment() {
+	public static ArrayList<Block> createExperiment(boolean randomFirst) {
 		// Create the list to hold the blocks
 		ArrayList<Block> blocks = new ArrayList<>();
 		// Create the 4 types of blocks
@@ -138,7 +140,7 @@ public class TaskData {
 		Block experimentalRandom = new Block(Block.Type.EXPERIMENTAL_RANDOM);
 		Block practicePredictable = new Block(Block.Type.PRACTICE_PREDICTABLE);
 		Block experimentalPredictable = new Block(Block.Type.EXPERIMENTAL_PREDICTABLE);
-		// Determine whether predictable or random trials come first
+		// Put the blocks into the list according to the specified order
 		if (flip()) {
 			// Add the random trials, then the predictable trials to the list
 			blocks.add(practiceRandom);
@@ -193,41 +195,37 @@ public class TaskData {
 		public Block(Type blockType) {
 			type = blockType;
 			int quadrant = 0;
-			// Here we generate the specified number of predictably-placed trials.
+			/** We need to make sure that exactly half of the trials in each block are "incongruent".
+			 * That is, the key that would be pressed for the letter option is different from the key that 
+			 * would be pressed for the number option. The other half of the trials must be congruent. 
+			 * In other words, the same key could be pressed for both the letter and the number option. 
+			 * Congruent and incongruent trials must be randomly distributed throughout the trial sequence.
+			 */
+			 // To start, we generate a list of the indexes of all the trials which will be in the list.
+			ArrayList<Integer> trialIndices = new ArrayList<Integer>(type.numTrials);
+			for (int i=0; i<type.numTrials; i++) {
+				trialIndices.add(i);
+			}
+			// Next, we randomly shuffle this list of indexes.
+			Collections.shuffle(trialIndices);
+			/*
+			 * Then we take a subset of the shuffled indexes that is one half of the size of the total
+			 * number of indexes. The random indexes in this new list will be the locations of the 
+			 * congruent trials in the trial sequence to be generated. All indexes not in this list will
+			 * be the locations of the incongruent trials in the trial sequence.
+			 */
+			List<Integer> congruentTrialIndices = trialIndices.subList(0, (type.numTrials/2));
+			// We check to see if we are generating predictably-placed or randomly-placed trials.
 			if (type.equals(Type.PRACTICE_PREDICTABLE) || type.equals(Type.EXPERIMENTAL_PREDICTABLE)) {
+				/**
+				 * Here we generate the specified number of predictably-placed trials, specifying both
+				 * their position and their congruence or incongruence.
+				 */
 				for (int i=0; i<type.numTrials; i++) {
-					trials.add(new Trial((quadrant++)%4, flip()));
-					/**
-					 * TODO: I may need to change this so that the same number of congruent & incongruent
-					 * trials are created, using the same method I use for the random blocks. I am waiting
-					 * to hear back about this.
-					 */
+					trials.add(new Trial((quadrant++)%4, congruentTrialIndices.contains(i)));
 				}
 			} else {
-				/*
-				 * Here we generate the specified number of randomly-placed trials.
-				 * We need to make sure that exactly half of these trials are "incongruent" - that is,
-				 * the key that would be pressed for the letter option is different from the key that 
-				 * would be pressed for the number option. The other half of the trials must be congruent - 
-				 * that is, the same key could be pressed for both the letter and the number option. 
-				 * Congruent and incongruent trials must be randomly distributed throughout the trial sequence.
-				 * 
-				 * To start, we generate a list of the indexes of all the trials which will be in the list.
-				 */
-				ArrayList<Integer> trialIndices = new ArrayList<Integer>(type.numTrials);
-				for (int i=0; i<type.numTrials; i++) {
-					trialIndices.add(i);
-				}
-				// Next, we randomly shuffle this list of indexes.
-				Collections.shuffle(trialIndices);
-				/*
-				 * Then we take a subset of the shuffled indexes that is one half of the size of the total
-				 * number of indexes. The random indexes in this new list will be the locations of the 
-				 * congruent trials in the trial sequence to be generated. All indexes not in this list will
-				 * be the locations of the incongruent trials in the trial sequence.
-				 */
-				List<Integer> congruentTrialIndices = trialIndices.subList(0, (type.numTrials/2));
-				// Now the sequence of trials is generated.
+				// Here we generate the specified number of randomly-placed trials.
 				for (int i=0; i<type.numTrials; i++) {
 					quadrant = randomizer.nextInt(3);
 					if (i > 0) {
