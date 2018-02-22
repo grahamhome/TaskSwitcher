@@ -1,15 +1,7 @@
 package code;
 
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-
-import code.TaskData.Block;
-import code.TaskData.Trial;
+import javafx.application.Application;
+import javafx.stage.Stage;
 
 /**
  * This is the main class of the TaskSwitcher program. 
@@ -17,9 +9,15 @@ import code.TaskData.Trial;
  * @author Graham Home <gmh5970@g.rit.edu>
  *
  */
-public class TaskSwitcher {
+public class TaskSwitcher extends Application {
 
 	public static void main(String[] args) {
-		TaskDataTester.test();
+		TaskDataTester.testQuantifiably();
+	}
+
+	@Override
+	public void start(Stage arg0) throws Exception {
+		// TODO Auto-generated method stub
+		
 	}
 }
