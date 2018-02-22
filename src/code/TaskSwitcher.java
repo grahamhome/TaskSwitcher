@@ -3,8 +3,13 @@ package code;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 import code.TaskData.Block;
+import code.TaskData.Trial;
 
 /**
  * This is the main class of the TaskSwitcher program. 
@@ -15,19 +20,6 @@ import code.TaskData.Block;
 public class TaskSwitcher {
 
 	public static void main(String[] args) {
-		test();
+		TaskDataTester.test();
 	}
-	
-	private static void test() {
-		try {
-			PrintWriter outputWriter = new PrintWriter("C:/Users/Graham/TaskSwitcherTestOutputLong.txt", "UTF-8");
-			for (Block block : TaskData.createExperiment(true)) {
-				outputWriter.write(block.toString());
-			}
-			outputWriter.close();
-		} catch (FileNotFoundException | UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-	}
-
 }

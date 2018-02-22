@@ -27,6 +27,8 @@ public class TaskData {
 	 * But beware! Each number in this section MUST be even.
 	 * This is necessary to ensure there are an exactly equal number of
 	 * congruent and incongruent trials in each block.
+	 * Additionally, the number of trials in each predictable block 
+	 * must be evenly divisible by 4.
 	 * You've been warned!
 	 */
 	
@@ -115,15 +117,12 @@ public class TaskData {
 	 * if you want the program to work correctly :)
 	 */
 	
-	// This is a random number generator
-	public static Random randomizer = new Random();
-	
 	/**
 	 * This is a method to toss a Boolean coin.
 	 * @return : true or false
 	 */
 	public static boolean flip() {
-		return (randomizer.nextInt(2) == 0);
+		return (new Random().nextInt(2) == 0);
 	}
 	
 	/**
@@ -141,7 +140,7 @@ public class TaskData {
 		Block practicePredictable = new Block(Block.Type.PRACTICE_PREDICTABLE);
 		Block experimentalPredictable = new Block(Block.Type.EXPERIMENTAL_PREDICTABLE);
 		// Put the blocks into the list according to the specified order
-		if (flip()) {
+		if (randomFirst) {
 			// Add the random trials, then the predictable trials to the list
 			blocks.add(practiceRandom);
 			blocks.add(experimentalRandom);
@@ -174,7 +173,11 @@ public class TaskData {
 			;
 			public int numTrials;
 			private Type(int n) {
-				numTrials = n;
+				/*
+				 * We need to generate one extra trial in each block, 
+				 * since the first trial will not be used when tallying the results.
+				 */
+				numTrials = n+1;
 			}
 			
 			@Override
@@ -190,7 +193,9 @@ public class TaskData {
 		
 		/**
 		 * This creates a block of the specified type.
-		 * @param type : The type of block to create
+		 * Each block contains a number of trials that is one greater than the number that was specified.
+		 * This is because the first trial will not be used when tallying the results.
+		 * @param type : The type of block to create.
 		 */
 		public Block(Type blockType) {
 			type = blockType;
@@ -200,46 +205,89 @@ public class TaskData {
 			 * would be pressed for the number option. The other half of the trials must be congruent. 
 			 * In other words, the same key could be pressed for both the letter and the number option. 
 			 * Congruent and incongruent trials must be randomly distributed throughout the trial sequence.
+			 * 
+			 * Additionally, we need to ensure that half of the trials in each block are "task-switching" trials.
+			 * That is, if the previous trial was a number identification task, this trial will be a letter-identification
+			 * task, and vice versa. This will happen automatically in the predictable blocks, but must be enforced in the 
+			 * random blocks. In the random blocks, task-switching and non-task-switching trials must be distributed randomly.
 			 */
-			 // To start, we generate a list of the indexes of all the trials which will be in the list.
-			ArrayList<Integer> trialIndices = new ArrayList<Integer>(type.numTrials);
-			for (int i=0; i<type.numTrials; i++) {
-				trialIndices.add(i);
+			 /**
+			  * To start, we generate two lists of the indexes of all the trials which will be in the list, 
+			  * excluding the first trial which will not be counted in the results.
+			  */
+			List<Integer> congruentTrialIndices = new ArrayList<Integer>(type.numTrials);
+			List<Integer> switchTrialIndices = new ArrayList<Integer>(type.numTrials);
+			for (int i=1; i<type.numTrials; i++) {
+				congruentTrialIndices.add(i);
+				switchTrialIndices.add(i);
 			}
-			// Next, we randomly shuffle this list of indexes.
-			Collections.shuffle(trialIndices);
+			// Next, we randomly shuffle the lists of indexes.
+			Collections.shuffle(congruentTrialIndices);
+			Collections.shuffle(switchTrialIndices);
 			/*
 			 * Then we take a subset of the shuffled indexes that is one half of the size of the total
-			 * number of indexes. The random indexes in this new list will be the locations of the 
-			 * congruent trials in the trial sequence to be generated. All indexes not in this list will
-			 * be the locations of the incongruent trials in the trial sequence.
+			 * number of indexes from each list of indexes. The random indexes in these new lists will be 
+			 * the locations of the congruent and switch trials in the trial sequence to be generated. All 
+			 * indexes not in these lists will be the locations of the incongruent and non-switch trials in the trial sequence.
 			 */
-			List<Integer> congruentTrialIndices = trialIndices.subList(0, (type.numTrials/2));
-			// We check to see if we are generating predictably-placed or randomly-placed trials.
+			congruentTrialIndices = congruentTrialIndices.subList(0, type.numTrials/2);
+			switchTrialIndices = switchTrialIndices.subList(0, type.numTrials/2);
+			/*
+			 * Now we're ready to generate the trials for this block.
+			 * First we check to see if we are generating predictably-placed or randomly-placed trials.
+			 */
 			if (type.equals(Type.PRACTICE_PREDICTABLE) || type.equals(Type.EXPERIMENTAL_PREDICTABLE)) {
 				/**
-				 * Here we generate the specified number of predictably-placed trials, specifying both
-				 * their position and their congruence or incongruence.
+				 * Here we generate the specified number of predictably-placed trials, specifying their position,
+				 * their congruence or incongruence, and whether or not they will be counted in the experimental results.
 				 */
 				for (int i=0; i<type.numTrials; i++) {
-					trials.add(new Trial((quadrant++)%4, congruentTrialIndices.contains(i)));
+					trials.add(new Trial((quadrant++)%4, (i==0 ? flip() : congruentTrialIndices.contains(i)), (i>0)));
 				}
 			} else {
 				// Here we generate the specified number of randomly-placed trials.
 				for (int i=0; i<type.numTrials; i++) {
-					quadrant = randomizer.nextInt(3);
-					if (i > 0) {
-						// Here we ensure that this trial is in a different position than the last one.
-						while (quadrant == trials.get(i-1).position.value) {
-							quadrant = randomizer.nextInt(3);
+					if (i == 0) {
+						quadrant = new Random().nextInt(3);
+					} else {
+						/*
+						 * We need to know the position of the last trial to ensure that this trial will
+						 * be task-switching or non-task-switching as specified.
+						 */
+						quadrant = trials.get(i-1).position.value;
+						/*
+						 * Here we ensure that this trial is in a different position than the last one.
+						 * We also ensure that only trials at the "switch indices" will make the subject
+						 * switch between letter-identification and number-identification.
+						 */
+						if (switchTrialIndices.contains(i)) {
+							// Set the trial's quadrant to create a task-switch trial
+							if (quadrant < 2) {
+								quadrant = (flip() ? 2 : 3);
+							} else {
+								quadrant = (flip() ? 0 : 1);
+							}
+						} else {
+							// Set the trial's quadrant to create a non-task-switch trial.
+							if (quadrant < 2) {
+								quadrant = (quadrant == 0 ? 1 : 0);
+							} else {
+								quadrant = (quadrant == 2 ? 3 : 2);
+							}
 						}
 					}
-					// Here we generate the new trial, specifying both its position and its congruence or incongruence.
-					trials.add(new Trial(quadrant, congruentTrialIndices.contains(i)));
+					/*
+					 * Finally we generate the new trial, specifying its position, its congruence or incongruence, 
+					 * and whether or not it will be counted in the experimental results.
+					 */
+					trials.add(new Trial(quadrant, (i==0 ? flip() : congruentTrialIndices.contains(i)), (i>0)));
 				}
 			}
 		}
 		
+		/**
+		 * This method returns a string representation of a block for data output purposes.
+		 */
 		@Override
 		public String toString() {
 			StringBuilder blockString = new StringBuilder(type.toString());
@@ -281,6 +329,8 @@ public class TaskData {
 		public char number;
 		// The correct response to this trial
 		public char correctReponse;
+		// Variable indicating whether or not this trial will be used in result calculations.
+		public boolean counted;
 		/*
 		 * If this variable is set to 'true', the trial will be congruent.
 		 * This means that its letter and number will both correspond to the
@@ -302,10 +352,13 @@ public class TaskData {
 		 * This creates a congruent or incongruent trial with the specified position.
 		 * @param quadrant : A number 0-3 where 0 = upper left, 1 = upper right, 2 = lower right, 3 = lower left.
 		 * @param isCongruent : True for a congruent trial, false for an incongruent trial.
+		 * @param isCounted : True for a trial to be included in results calculation, false for a trial to be excluded.
 		 */
-		public Trial(int quadrant, boolean isCongruent) {
+		public Trial(int quadrant, boolean isCongruent, boolean isCounted) {
 			// Assign the trial's congruence or incongruence as specified.
 			congruent = isCongruent;
+			// Assign the trial's counted/not counted status as specified
+			counted = isCounted;
 			// Randomly decide if the trial will contain a vowel or consonant.
 			boolean hasVowel = flip();
 			char[] letters = (hasVowel ? VOWELS : CONSONANTS);
@@ -325,12 +378,12 @@ public class TaskData {
 			// Choose a letter at random from the selected set.
 			// Ensure that it is different from the last trial's letter.
 			while (letter == lastLetter) {
-				letter = letters[randomizer.nextInt(letters.length)];
+				letter = letters[new Random().nextInt(letters.length)];
 			}
 			// Choose a number at random from the selected set.
 			// Ensure that it is different from the last trial's number.
 			while (number == lastNumber) {
-				number = numbers[randomizer.nextInt(numbers.length)];
+				number = numbers[new Random().nextInt(numbers.length)];
 			}
 			lastLetter = letter;
 			lastNumber = number;
@@ -358,10 +411,14 @@ public class TaskData {
 			}
 		}
 		
+		/**
+		 * This method returns a string representation of a trial for data output purposes.
+		 */
 		@Override
 		public String toString() {
 			StringBuilder trialString = new StringBuilder();
-			return trialString.append(letter).append(number).append(", ").append(position.toString()).append(System.lineSeparator()).toString();
+			return trialString.append(letter).append(number).append(", ").append(position.toString()).append(", ")
+					.append(congruent ? "congruent" : "incongruent").append(counted ? "" : ", not counted").append(System.lineSeparator()).toString();
 		}
 	}
 }
