@@ -46,13 +46,6 @@ public class TaskData {
 	 * Percentages may be decimal values if you want.
 	 */
 	
-	// Percentage of letters that will be vowels (the other percent will be consonants)
-	public static final float PERCENT_VOWEL = 50;
-	// Percentage of numbers that will be even (the other percent will be odd)
-	public static final float PERCENT_EVEN = 50;
-	// Percentage of number/letter pairs that will be congruent (the rest will be incongruent)
-	public static final float PERCENT_CONGRUENT = 50;
-	
 	/*
 	 * Times:
 	 * All times are in milliseconds and must be whole numbers.
@@ -117,13 +110,7 @@ public class TaskData {
 	 * if you want the program to work correctly :)
 	 */
 	
-	/**
-	 * This is a method to toss a Boolean coin.
-	 * @return : true or false
-	 */
-	public static boolean flip() {
-		return (new Random().nextInt(2) == 0);
-	}
+	private static Random randomizer = new Random();
 	
 	/**
 	 * This is a method to generate the 4 blocks of trials in an experiment.
@@ -242,13 +229,13 @@ public class TaskData {
 				 * their congruence or incongruence, and whether or not they will be counted in the experimental results.
 				 */
 				for (int i=0; i<type.numTrials; i++) {
-					trials.add(new Trial((quadrant++)%4, (i==0 ? flip() : congruentTrialIndices.contains(i)), (i>0)));
+					trials.add(new Trial((quadrant++)%4, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0)));
 				}
 			} else {
 				// Here we generate the specified number of randomly-placed trials.
 				for (int i=0; i<type.numTrials; i++) {
 					if (i == 0) {
-						quadrant = new Random().nextInt(3);
+						quadrant = randomizer.nextInt(3);
 					} else {
 						/*
 						 * We need to know the position of the last trial to ensure that this trial will
@@ -263,9 +250,9 @@ public class TaskData {
 						if (switchTrialIndices.contains(i)) {
 							// Set the trial's quadrant to create a task-switch trial
 							if (quadrant < 2) {
-								quadrant = (flip() ? 2 : 3);
+								quadrant = (randomizer.nextBoolean() ? 2 : 3);
 							} else {
-								quadrant = (flip() ? 0 : 1);
+								quadrant = (randomizer.nextBoolean() ? 0 : 1);
 							}
 						} else {
 							// Set the trial's quadrant to create a non-task-switch trial.
@@ -280,7 +267,7 @@ public class TaskData {
 					 * Finally we generate the new trial, specifying its position, its congruence or incongruence, 
 					 * and whether or not it will be counted in the experimental results.
 					 */
-					trials.add(new Trial(quadrant, (i==0 ? flip() : congruentTrialIndices.contains(i)), (i>0)));
+					trials.add(new Trial(quadrant, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0)));
 				}
 			}
 		}
@@ -360,7 +347,7 @@ public class TaskData {
 			// Assign the trial's counted/not counted status as specified
 			counted = isCounted;
 			// Randomly decide if the trial will contain a vowel or consonant.
-			boolean hasVowel = flip();
+			boolean hasVowel = randomizer.nextBoolean();
 			char[] letters = (hasVowel ? VOWELS : CONSONANTS);
 			/*
 			 * Now we know if the trial must contain an odd or even number 
@@ -378,12 +365,12 @@ public class TaskData {
 			// Choose a letter at random from the selected set.
 			// Ensure that it is different from the last trial's letter.
 			while (letter == lastLetter) {
-				letter = letters[new Random().nextInt(letters.length)];
+				letter = letters[randomizer.nextInt(letters.length)];
 			}
 			// Choose a number at random from the selected set.
 			// Ensure that it is different from the last trial's number.
 			while (number == lastNumber) {
-				number = numbers[new Random().nextInt(numbers.length)];
+				number = numbers[randomizer.nextInt(numbers.length)];
 			}
 			lastLetter = letter;
 			lastNumber = number;

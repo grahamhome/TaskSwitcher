@@ -11,6 +11,7 @@ import code.TaskData.Block;
 import code.TaskData.Trial;
 
 public class TaskDataTester {
+	private static Random randomizer = new Random();
 	public static void test() {
 		try {
 			PrintWriter outputWriter = new PrintWriter("C:/Users/Graham/TaskSwitcherTestOutput1.txt", "UTF-8");
@@ -24,7 +25,7 @@ public class TaskDataTester {
 	}
 	
 	public static void testQuantifiably() {
-		int[] tests = {1, 10, 100, 1000, 10000, 100000};
+		int[] tests = {1, 10, 100, 1000};//, 10000, 100000};
 		List<Character> vowels = new ArrayList<>();
 		for (char v : TaskData.VOWELS) {
 			vowels.add(v);
@@ -44,10 +45,14 @@ public class TaskDataTester {
 			int unbalancedCongBlocks = 0;
 			int unbalancedVowelBlocks = 0;
 			int unbalancedOddBlocks = 0;
-			float largestUnbalancedVowelPercent = 0;
-			float largestUnbalancedOddPercent = 0;
+			float largestUnbalancedVowelFraction = 0;
+			float largestUnbalancedOddFraction = 0;
+			float totalUnbalancedVowels = 0;
+			float totalUnbalancedOdds = 0;
+			float totalUnbalancedVowelsBase = 0;
+			float totalUnbalancedOddsBase = 0;
 			for (int i=0; i<numTests; i++) {
-				for (Block block : TaskData.createExperiment(new Random().nextInt(2) == 1)) {
+				for (Block block : TaskData.createExperiment(randomizer.nextBoolean())) {
 					int switchBalance = 0;
 					int congBalance = 0;
 					int vowelBalance = 0;
@@ -83,39 +88,50 @@ public class TaskDataTester {
 					unbalancedCongBlocks += (congBalance != 0 ? 1 : 0);
 					unbalancedVowelBlocks += (vowelBalance != 0 ? 1 : 0);
 					unbalancedOddBlocks += (oddBalance != 0 ? 1 : 0);
-					if (Math.abs(((float)vowelBalance)/block.trials.size()) > Math.abs(largestUnbalancedVowelPercent)) {
-						largestUnbalancedVowelPercent = ((float)vowelBalance)/block.trials.size();
+					if (Math.abs(((float)vowelBalance)/block.trials.size()) > Math.abs(largestUnbalancedVowelFraction)) {
+						largestUnbalancedVowelFraction = ((float)vowelBalance)/block.trials.size();
 					}
-					if (Math.abs(((float)oddBalance)/block.trials.size()) > Math.abs(largestUnbalancedOddPercent)) {
-						largestUnbalancedOddPercent = ((float)oddBalance)/block.trials.size();
+					if (Math.abs(((float)oddBalance)/block.trials.size()) > Math.abs(largestUnbalancedOddFraction)) {
+						largestUnbalancedOddFraction = ((float)oddBalance)/block.trials.size();
+					}
+					if (vowelBalance != 0) {
+						totalUnbalancedVowels += Math.abs(vowelBalance);
+						totalUnbalancedVowelsBase += block.trials.size();
+					}
+					if (oddBalance != 0) {
+						totalUnbalancedOdds += Math.abs(oddBalance);
+						totalUnbalancedOddsBase += block.trials.size();
 					}
 				}
 			}
-			int totalTrials = TaskData.EXPERIMENTAL_PREDICTABLE_TRIALS+TaskData.PRACTICE_PREDICTABLE_TRIALS+
+			int totalTrialsInEachTest = TaskData.EXPERIMENTAL_PREDICTABLE_TRIALS+TaskData.PRACTICE_PREDICTABLE_TRIALS+
 					TaskData.EXPERIMENTAL_RANDOM_TRIALS+TaskData.PRACTICE_RANDOM_TRIALS;
+			int totalTrialsInAllTests = totalTrialsInEachTest*numTests;
 			if (k>0) {
 				results.append(System.lineSeparator());
 			}
 			results.append("TEST " + (k+1)).append(System.lineSeparator());
 			results.append("Ran " + numTests + (numTests>1 ? " experiments " : " experiment ") + "for a total of:").append(System.lineSeparator());
 			results.append("\t" + numTests*2 + " random blocks and " + numTests*2 + " predictable blocks. (" + numTests*4 + " total blocks)").append(System.lineSeparator());
-			results.append("\t" + numTests*(totalTrials) + " trials").append(System.lineSeparator());
+			results.append("\t" + totalTrialsInAllTests + " trials").append(System.lineSeparator());
 			results.append("The first trial from each block was excluded from the statistics.").append(System.lineSeparator());
 			results.append("Overall, there were: ").append(System.lineSeparator());
 			results.append("\t" + Math.abs(ltSwitchBalance) + " more " + (ltSwitchBalance >= 0 ? "switch" : "non-switch") + 
-					" trials than " + (ltSwitchBalance < 0 ? "switch" : "non-switch") + " trials. (" + ((float)Math.abs(ltSwitchBalance))/totalTrials + "% of total trials)").append(System.lineSeparator());
+					" trials than " + (ltSwitchBalance < 0 ? "switch" : "non-switch") + " trials. (" + ((float)Math.abs(ltSwitchBalance)*100)/totalTrialsInAllTests + "% of total trials)").append(System.lineSeparator());
 			results.append("\t" + Math.abs(ltCongBalance) + " more " + (ltCongBalance >= 0 ? "congruent" : "incongruent") + 
-					" trials than " + (ltCongBalance < 0 ? "congruent" : "incongruent") + " trials. (" + ((float)Math.abs(ltCongBalance))/totalTrials + "% of total trials)").append(System.lineSeparator());
+					" trials than " + (ltCongBalance < 0 ? "congruent" : "incongruent") + " trials. (" + ((float)Math.abs(ltCongBalance)*100)/totalTrialsInAllTests + "% of total trials)").append(System.lineSeparator());
 			results.append("\t" + Math.abs(ltVowelBalance) + " more " + (ltVowelBalance >= 0 ? "vowels" : "consonants") + 
-					" than " + (ltVowelBalance < 0 ? "vowels" : "consonants") + ". (" + ((float)Math.abs(ltVowelBalance))/totalTrials + "% of total letters)").append(System.lineSeparator());
+					" than " + (ltVowelBalance < 0 ? "vowels" : "consonants") + ". (" + ((float)Math.abs(ltVowelBalance)*100)/totalTrialsInAllTests + "% of total letters)").append(System.lineSeparator());
 			results.append("\t" + Math.abs(ltOddBalance) + " more " + (ltOddBalance >= 0 ? "odd" : "even") + 
-					" numbers than " + (ltOddBalance < 0 ? "odd" : "even") + " numbers. (" + ((float)Math.abs(ltOddBalance))/totalTrials + "% of total numbers)").append(System.lineSeparator());
-			results.append("\t" + Math.abs(unbalancedSwitchBlocks) + " blocks with a different number of switching & non-switching trials. (" + ((float)Math.abs(unbalancedSwitchBlocks))/(numTests*4) + "% of total blocks)").append(System.lineSeparator());
-			results.append("\t" + Math.abs(unbalancedCongBlocks) + " blocks with a different number of congruent & incongruent trials. (" + ((float)Math.abs(unbalancedCongBlocks))/(numTests*4) + "% of total blocks)").append(System.lineSeparator());
-			results.append("\t" + Math.abs(unbalancedVowelBlocks) + " blocks with a different number of vowel & consonant trials. (" + ((float)Math.abs(unbalancedVowelBlocks))/(numTests*4) + "% of total blocks)").append(System.lineSeparator());
-			results.append("\t" + Math.abs(unbalancedOddBlocks) + " blocks with a different number of odd-number & even-number trials. (" + ((float)Math.abs(unbalancedOddBlocks))/(numTests*4) + "% of total blocks)").append(System.lineSeparator());
-			results.append("In the block with the largest difference between the numbers of vowels and consonants, " + Math.abs(largestUnbalancedVowelPercent) + "% of the letters were " + (largestUnbalancedVowelPercent > 0 ? "vowels." : "consonants.")).append(System.lineSeparator());
-			results.append("In the block with the largest difference between the numbers of odd and even numbers, " + Math.abs(largestUnbalancedOddPercent) + "% of the numbers were " + (largestUnbalancedVowelPercent > 0 ? "odd." : "even.")).append(System.lineSeparator());
+					" numbers than " + (ltOddBalance < 0 ? "odd" : "even") + " numbers. (" + ((float)Math.abs(ltOddBalance)*100)/totalTrialsInAllTests + "% of total numbers)").append(System.lineSeparator());
+			results.append("\t" + Math.abs(unbalancedSwitchBlocks) + " blocks with a different number of switching & non-switching trials. (" + ((float)Math.abs(unbalancedSwitchBlocks)*100)/(numTests*4) + "% of total blocks)").append(System.lineSeparator());
+			results.append("\t" + Math.abs(unbalancedCongBlocks) + " blocks with a different number of congruent & incongruent trials. (" + ((float)Math.abs(unbalancedCongBlocks)*100)/(numTests*4) + "% of total blocks)").append(System.lineSeparator());
+			results.append("\t" + Math.abs(unbalancedVowelBlocks) + " blocks with a different number of vowel & consonant trials. (" + ((float)Math.abs(unbalancedVowelBlocks)*100)/(numTests*4) + "% of total blocks)").append(System.lineSeparator());
+			results.append("\t" + Math.abs(unbalancedOddBlocks) + " blocks with a different number of odd-number & even-number trials. (" + ((float)Math.abs(unbalancedOddBlocks)*100)/(numTests*4) + "% of total blocks)").append(System.lineSeparator());
+			results.append("In the block with the largest difference between the numbers of vowels and consonants, " + Math.abs(largestUnbalancedVowelFraction*100) + "% of the letters were " + (largestUnbalancedVowelFraction > 0 ? "vowels." : "consonants.")).append(System.lineSeparator());
+			results.append("In the block with the largest difference between the numbers of odd and even numbers, " + Math.abs(largestUnbalancedOddFraction*100) + "% of the numbers were " + (largestUnbalancedVowelFraction > 0 ? "odd." : "even.")).append(System.lineSeparator());
+			results.append("Among all blocks with a different number of vowel and consonant trials, the average was that " + (totalUnbalancedVowels*100)/totalUnbalancedVowelsBase + "% of the trials in the block were unevenly distributed between vowels and consonants.").append(System.lineSeparator());
+			results.append("Among all blocks with a different number of odd and even-number trials, the average was that " + (totalUnbalancedOdds*100)/totalUnbalancedOddsBase + "% of the trials in the block were unevenly distributed between odds and evens.").append(System.lineSeparator());
 		}
 		try {
 			PrintWriter outputWriter = new PrintWriter("C:/Users/Graham/TaskSwitcherQuantifiableTestOutput.txt", "UTF-8");
