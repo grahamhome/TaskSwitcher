@@ -33,13 +33,13 @@ public class TaskData {
 	 */
 	
 	// Number of pairs in the predictable practice block
-	public static int PRACTICE_PREDICTABLE_TRIALS = 40;
+	public static int PRACTICE_PREDICTABLE_TRIALS = 10;//40;
 	// Number of pairs in the predictable experimental block
-	public static int EXPERIMENTAL_PREDICTABLE_TRIALS = 150;
+	public static int EXPERIMENTAL_PREDICTABLE_TRIALS = 10;//150;
 	// Number of pairs in the random practice block
-	public static int PRACTICE_RANDOM_TRIALS = 40;
+	public static int PRACTICE_RANDOM_TRIALS = 10;//40;
 	// Number of pairs in the random experimental block
-	public static int EXPERIMENTAL_RANDOM_TRIALS = 150;
+	public static int EXPERIMENTAL_RANDOM_TRIALS = 10;//150;
 	
 	/*
 	 * Percentages:

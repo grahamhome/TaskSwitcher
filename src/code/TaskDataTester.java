@@ -14,7 +14,7 @@ public class TaskDataTester {
 	private static Random randomizer = new Random();
 	public static void test() {
 		try {
-			PrintWriter outputWriter = new PrintWriter("C:/Users/Graham/TaskSwitcherTestOutput1.txt", "UTF-8");
+			PrintWriter outputWriter = new PrintWriter("C:/Users/Graham/TaskSwitcherTestOutput4.txt", "UTF-8");
 			for (Block block : TaskData.createExperiment(true)) {
 				outputWriter.write(block.toString());
 			}
