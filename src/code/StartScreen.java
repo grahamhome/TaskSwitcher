@@ -29,12 +29,14 @@ import javafx.stage.Stage;
  * to enter the subject number and select the experiment type.
  * @author Graham Home <gmh5970@g.rit.edu>
  */
-public class StartScreen extends Group {
+public class StartScreen extends HBox {
 	private static Stage stage;
 	private static StartScreen instance;
 	public static int selectedType;
 	
 	private StartScreen() {
+		setBackground(new Background(new BackgroundFill(Color.BLACK, null, null)));
+		setAlignment(Pos.CENTER);
 		Label title = new Label("Configuration");
 		title.setFont(Font.font("System", FontWeight.BOLD, 20));
 		title.setMinWidth(Region.USE_PREF_SIZE);
@@ -88,13 +90,13 @@ public class StartScreen extends Group {
 					System.exit(0);
 					
 				}
-			}, 3000, TimeUnit.MILLISECONDS);
+			}, 10000, TimeUnit.MILLISECONDS);
 			
 		});
 		getChildren().add(layoutBox);
 	};
 
-	public static Group getInstance(Stage primaryStage) {
+	public static HBox getInstance(Stage primaryStage) {
 		stage = primaryStage;
 		selectedType = 1;
 		return (instance == null ? instance = new StartScreen() : instance);

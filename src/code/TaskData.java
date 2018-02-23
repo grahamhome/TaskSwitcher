@@ -96,13 +96,13 @@ public class TaskData {
 	 */
 	
 	// Vowel key
-	public static final char VOWEL_KEY = LEFT;
+	public static char VOWEL_KEY = LEFT;
 	// Consonant key
-	public static final char CONSONANT_KEY = RIGHT;
+	public static char CONSONANT_KEY = RIGHT;
 	// Odd number key
-	public static final char ODD_KEY = LEFT;
+	public static char ODD_KEY = LEFT;
 	// Even number key
-	public static final char EVEN_KEY = RIGHT;
+	public static char EVEN_KEY = RIGHT;
 	
 	/*
 	 * End of Experimental Variables section.

@@ -32,8 +32,7 @@ public class TaskSwitcher extends Application {
 		stage.setScene(new Scene(
 				new StackPane(), 
 				Screen.getPrimary().getBounds().getWidth(), 
-				Screen.getPrimary().getBounds().getHeight(), 
-				Color.BLACK)
+				Screen.getPrimary().getBounds().getHeight())
 		);
 		stage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
 		stage.setFullScreen(true);
