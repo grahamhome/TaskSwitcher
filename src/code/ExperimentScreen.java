@@ -35,6 +35,7 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextBoundsType;
 import javafx.stage.Stage;
+import sun.security.x509.IssuingDistributionPointExtension;
 
 /**
  * This class creates the experiment screen which 
@@ -51,17 +52,19 @@ public class ExperimentScreen extends VBox {
 	private static final Color FOREGROUND = Color.WHITE;
 	private static final double FONT_SIZE = 75;
 	
-	private HBox box;
+	private static HBox box;
 	
-	private VisualTrial currentTrial;
+	private static VisualTrial currentTrial;
 	
-	private synchronized VisualTrial getCurrentTrial() {
+	private static synchronized VisualTrial getCurrentTrial() {
 		return currentTrial;
 	}
 	
-	private synchronized void setCurrentTrial(VisualTrial trial) {
+	private static synchronized void setCurrentTrial(VisualTrial trial) {
 		currentTrial = trial;
 	}
+	
+	private static AtomicBoolean listening = new AtomicBoolean(false);
 	
 	private ExperimentScreen() {
 		setBackground(new Background(new BackgroundFill(Color.BLACK, null, null)));
@@ -93,8 +96,10 @@ public class ExperimentScreen extends VBox {
 	private void createKeyListener() {
 		stage.getScene().setOnKeyPressed(e -> {
 			System.out.println("Got a keypress: " + e.getText()); // TODO: remove
-			if (e.getCode().equals(TaskData.LEFT_KEY) || e.getCode().equals(TaskData.RIGHT_KEY)) {
+			if (listening.get() && (e.getCode().equals(TaskData.LEFT_KEY) || e.getCode().equals(TaskData.RIGHT_KEY))) {
 				System.out.println("Keypress was valid"); // TODO: remove
+				// We want to stop listening to key presses until the next trial becomes active.
+				listening.set(false);
 				try {
 					switch (getCurrentTrial().end(e.getCode())) {
 						case CORRECT:
@@ -102,12 +107,11 @@ public class ExperimentScreen extends VBox {
 							Thread.sleep(150);
 							runTask(getCurrentTrial().trial.next);
 							break;
-						case INCORRECT:
+						case INCORRECT_PRACTICE:
+							System.out.println("practice trial failed"); // TODO: remove
+							// TODO: play sound here
+						case INCORRECT_EXPERIMENTAL:
 							System.out.println("Keypress was incorrect"); // TODO: remove
-							if (getCurrentTrial().trial.isPractice()) {
-								System.out.println("practice trial failed"); // TODO: remove
-								// TODO: play sound here
-							}
 							Thread.sleep(1500);
 							runTask(getCurrentTrial().trial.next);
 							break;
@@ -227,7 +231,6 @@ public class ExperimentScreen extends VBox {
 		 * service below rather than the thread-safe method calls.
 		 */
 		VisualTrial activeTrial = new VisualTrial(trial);
-		setCurrentTrial(activeTrial);
 		activeTrial.start();
 		ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
 		service.schedule(new Runnable() {
@@ -260,7 +263,8 @@ public class ExperimentScreen extends VBox {
 			MISSED_DEADLINE,
 			ALREADY_SET,
 			CORRECT,
-			INCORRECT,
+			INCORRECT_EXPERIMENTAL,
+			INCORRECT_PRACTICE,
 			;
 		}
 		
@@ -310,6 +314,9 @@ public class ExperimentScreen extends VBox {
 				@Override
 				public void run() {
 					trialView.setVisible(true);
+					setCurrentTrial(VisualTrial.this);
+					// Now we can start listening to key presses for this trial.
+					listening.set(true);
 				}
 			});
 		}
@@ -338,7 +345,7 @@ public class ExperimentScreen extends VBox {
 					return EndAttemptResult.CORRECT;
 				} else {
 					trial.result = Result.INCORRECT;
-					return EndAttemptResult.INCORRECT;
+					return (trial.isPractice() ? EndAttemptResult.INCORRECT_PRACTICE : EndAttemptResult.INCORRECT_EXPERIMENTAL);
 				}
 			} else {
 				return EndAttemptResult.MISSED_DEADLINE;
