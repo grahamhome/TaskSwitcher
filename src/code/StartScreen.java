@@ -1,13 +1,8 @@
 package code;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import code.ActivityController.Activity;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
@@ -15,7 +10,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -82,7 +76,7 @@ public class StartScreen extends HBox {
 		enterButton.setOnMouseReleased((e) -> {
 			selectedType = Integer.parseInt(experimentType.getSelectedToggle().getUserData().toString());
 			ActivityController.start(Activity.EXPERIMENT, stage);
-			ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+			/*ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
 			service.schedule(new Runnable() {
 				
 				@Override
@@ -90,7 +84,7 @@ public class StartScreen extends HBox {
 					System.exit(0);
 					
 				}
-			}, 10000, TimeUnit.MILLISECONDS);
+			}, 10000, TimeUnit.MILLISECONDS);*/
 			
 		});
 		getChildren().add(layoutBox);

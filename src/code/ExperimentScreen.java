@@ -1,15 +1,22 @@
 package code;
 
-import java.util.ArrayList;
-import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import code.TaskData.Block;
+import code.TaskData.Instructions;
+import code.TaskData.Pause;
+import code.TaskData.SubTask;
 import code.TaskData.Trial;
 import code.TaskData.Trial.Position;
+import code.TaskData.Trial.Result;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.control.Label;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Border;
@@ -18,7 +25,6 @@ import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
@@ -39,13 +45,23 @@ import javafx.stage.Stage;
 public class ExperimentScreen extends VBox {
 	private static Stage stage;
 	private static ExperimentScreen instance;
-	private Group gridGroup;
-	private double gridOffsetX, gridOffsetY, gridSize;;
+	private static Group gridGroup;
+	private static double gridOffsetX, gridOffsetY, gridSize;;
 	private static final double LINE_WIDTH = 5;
 	private static final Color FOREGROUND = Color.WHITE;
 	private static final double FONT_SIZE = 75;
 	
-	HBox box;
+	private HBox box;
+	
+	private VisualTrial currentTrial;
+	
+	private synchronized VisualTrial getCurrentTrial() {
+		return currentTrial;
+	}
+	
+	private synchronized void setCurrentTrial(VisualTrial trial) {
+		currentTrial = trial;
+	}
 	
 	private ExperimentScreen() {
 		setBackground(new Background(new BackgroundFill(Color.BLACK, null, null)));
@@ -70,7 +86,41 @@ public class ExperimentScreen extends VBox {
 		addControlLabels();
 		box.getChildren().add(gridGroup);
 		getChildren().addAll(new Rectangle(stage.getWidth(), gridOffsetY), box);
+		createKeyListener();
 		runExperiment();
+	}
+	
+	private void createKeyListener() {
+		stage.getScene().setOnKeyPressed(e -> {
+			System.out.println("Got a keypress: " + e.getText()); // TODO: remove
+			if (e.getCode().equals(TaskData.LEFT_KEY) || e.getCode().equals(TaskData.RIGHT_KEY)) {
+				System.out.println("Keypress was valid"); // TODO: remove
+				try {
+					switch (getCurrentTrial().end(e.getCode())) {
+						case CORRECT:
+							System.out.println("Keypress was correct"); // TODO: remove
+							Thread.sleep(150);
+							runTask(getCurrentTrial().trial.next);
+							break;
+						case INCORRECT:
+							System.out.println("Keypress was incorrect"); // TODO: remove
+							if (getCurrentTrial().trial.isPractice()) {
+								System.out.println("practice trial failed"); // TODO: remove
+								// TODO: play sound here
+							}
+							Thread.sleep(1500);
+							runTask(getCurrentTrial().trial.next);
+							break;
+						case ALREADY_SET:
+						case MISSED_DEADLINE:
+							break;
+					}
+				} catch (InterruptedException ex) {
+					ex.printStackTrace();
+				}
+			}
+			System.out.println("Keypress was invalid"); // TODO: remove
+		});
 	}
 	
 	private void addIndicatorLabels() {
@@ -107,14 +157,14 @@ public class ExperimentScreen extends VBox {
 		controlsBox.setMaxWidth(width);
 		controlsBox.relocate((stage.getWidth()-width)/2, gridOffsetY+gridSize+30);
 		String leftKeyLabelText, rightKeyLabelText;
-		if (TaskData.VOWEL_KEY == TaskData.LEFT) {
+		if (TaskData.VOWEL_KEY == TaskData.LEFT_KEY) {
 			leftKeyLabelText = " - Vowel or ";
 			rightKeyLabelText = " - Consonant or ";
 		} else {
 			rightKeyLabelText = "Vowel or ";
 			leftKeyLabelText = "Consonant or ";
 		}
-		if (TaskData.ODD_KEY == TaskData.LEFT) {
+		if (TaskData.ODD_KEY == TaskData.LEFT_KEY) {
 			leftKeyLabelText += "Odd";
 			rightKeyLabelText += "Even";
 		} else {
@@ -124,7 +174,7 @@ public class ExperimentScreen extends VBox {
 		HBox leftKeyControls = new HBox(5);
 		leftKeyControls.setAlignment(Pos.CENTER_LEFT);
 		leftKeyControls.setMinWidth(width-10);
-		Label leftKey = new Label(String.valueOf(TaskData.LEFT).toUpperCase());
+		Label leftKey = new Label(TaskData.LEFT_KEY_NAME);
 		leftKey.setFont(Font.font("System", FontWeight.BOLD, 30));
 		leftKey.setTextFill(FOREGROUND);
 		Label leftKeyAction = new Label(leftKeyLabelText);
@@ -135,7 +185,7 @@ public class ExperimentScreen extends VBox {
 		HBox rightKeyControls = new HBox(5);
 		rightKeyControls.setAlignment(Pos.CENTER_LEFT);
 		rightKeyControls.setMinWidth(width-10);
-		Label rightKey = new Label(String.valueOf(TaskData.RIGHT).toUpperCase());
+		Label rightKey = new Label(TaskData.RIGHT_KEY_NAME);
 		rightKey.setFont(Font.font("System", FontWeight.BOLD, 30));
 		rightKey.setTextFill(FOREGROUND);
 		Label rightKeyAction = new Label(rightKeyLabelText);
@@ -148,30 +198,153 @@ public class ExperimentScreen extends VBox {
 	}
 	
 	private void runExperiment() {
-		ArrayList<Block> blocks = TaskData.createExperiment((StartScreen.selectedType == 2));
-		Block first = blocks.get(0);
-		for (int i=0; i<1; i++) {
-			renderTrial(first.trials.get(i));
+		runTask(TaskData.createExperiment((StartScreen.selectedType == 2)));
+	}
+	
+	private void runTask(SubTask task) {
+		System.out.println("Starting a task"); // TODO: remove
+		if (task == null) {
+			System.out.println("Experiment is over"); // TODO: remove
+			// TODO: End experiment here
+		} else if (task instanceof Trial) {
+			System.out.println("Sending new trial to render function"); // TODO: remove
+			renderTrial((Trial)task);
+		} else if (task instanceof Instructions) {
+			System.out.println("Showing instructions"); // TODO: remove
+			// TODO: show instructions screen here
+			runTask(task.next);
+		} else if (task instanceof Pause) {
+			System.out.println("Pausing"); // TODO: remove
+			// TODO: show pause screen here
+			runTask(task.next);
 		}
 	}
 	
-	private void renderTrial(Trial trial) {
-		Text text = new Text(String.valueOf(trial.letter) + String.valueOf(trial.number));
-		text.setFont(Font.font("System", FontWeight.BOLD, FONT_SIZE));
-		text.setFill(FOREGROUND);
-		text.setBoundsType(TextBoundsType.VISUAL);
-		if (trial.position.equals(Position.UPPER_LEFT) || trial.position.equals(Position.LOWER_LEFT)) {
-			text.setX(gridOffsetX+((gridSize-LINE_WIDTH)/4));
-		} else {
-			text.setX(gridOffsetX+(((gridSize-LINE_WIDTH)/4)*3));
+	public void renderTrial(Trial trial) {
+		/**
+		 * We need an instance of the trial (and trial view) that will not change if the key listener
+		 * switches out the current trial. That's why this reference is used in the
+		 * service below rather than the thread-safe method calls.
+		 */
+		VisualTrial activeTrial = new VisualTrial(trial);
+		setCurrentTrial(activeTrial);
+		activeTrial.start();
+		ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+		service.schedule(new Runnable() {
+			@Override
+			public void run() {
+				if (!activeTrial.ended.get()) {
+					System.out.println("trial timed out");
+					System.out.println("starting next task from service");
+					Platform.runLater(new Runnable() {
+						@Override
+						public void run() {
+							activeTrial.end(null);
+							runTask(activeTrial.trial.next);
+						}
+					});
+				} else {
+					System.out.println("Trial did not time out");
+				}
+			}
+		}, TaskData.NO_INPUT_DURATION, TimeUnit.MILLISECONDS);
+	}
+	
+	/**
+	 * This class stores a Trial object as well as its visual representation.
+	 */
+	public static class VisualTrial {
+		
+		// The potential results of attempting to end a trial
+		public enum EndAttemptResult {
+			MISSED_DEADLINE,
+			ALREADY_SET,
+			CORRECT,
+			INCORRECT,
+			;
 		}
-		if (trial.position.equals(Position.UPPER_LEFT) || trial.position.equals(Position.UPPER_RIGHT)) {
-			text.setY(gridOffsetY+((gridSize-LINE_WIDTH)/4));
-		} else {
-			text.setY(gridOffsetY+(((gridSize-LINE_WIDTH)/4)*3));
+		
+		// The Trial object.
+		private Trial trial;
+		// The object used to visually depict the Trial object.
+		private Text trialView;
+		
+		// The time at which the trial appeared
+		private long startTime = 0;
+		// Indicates whether or not the trial has ended
+		private AtomicBoolean ended = new AtomicBoolean(false);
+		
+		public VisualTrial(Trial trial) {
+			this.trial = trial;
+			createView();
 		}
-		gridGroup.getChildren().add(text);
-		text.relocate(text.getX()-(text.getLayoutBounds().getWidth()/2), text.getY()-((text.getLayoutBounds().getMaxY()-text.getLayoutBounds().getMinY())/2));
+		
+		private void createView() {
+			trialView = new Text(String.valueOf(trial.letter) + String.valueOf(trial.number));
+			trialView.setFont(Font.font("System", FontWeight.BOLD, FONT_SIZE));
+			trialView.setFill(FOREGROUND);
+			trialView.setBoundsType(TextBoundsType.VISUAL);
+			if (trial.position.equals(Position.UPPER_LEFT) || trial.position.equals(Position.LOWER_LEFT)) {
+				trialView.setX(gridOffsetX+((gridSize-LINE_WIDTH)/4));
+			} else {
+				trialView.setX(gridOffsetX+(((gridSize-LINE_WIDTH)/4)*3));
+			}
+			if (trial.position.equals(Position.UPPER_LEFT) || trial.position.equals(Position.UPPER_RIGHT)) {
+				trialView.setY(gridOffsetY+((gridSize-LINE_WIDTH)/4));
+			} else {
+				trialView.setY(gridOffsetY+(((gridSize-LINE_WIDTH)/4)*3));
+			}
+			trialView.setVisible(false);
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					gridGroup.getChildren().add(trialView);
+					trialView.relocate(trialView.getX()-(trialView.getLayoutBounds().getWidth()/2), trialView.getY()-((trialView.getLayoutBounds().getMaxY()-trialView.getLayoutBounds().getMinY())/2));
+				}
+			});
+		}
+		
+		public synchronized void start() {
+			startTime = System.currentTimeMillis();
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					trialView.setVisible(true);
+				}
+			});
+		}
+		
+		public synchronized EndAttemptResult end(KeyCode input) {
+			long currentTime = System.currentTimeMillis();
+			if (ended.get()) {
+				return EndAttemptResult.ALREADY_SET;
+			}
+			ended.set(true);
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					gridGroup.getChildren().remove(trialView);
+				}
+			});
+			long elapsedTime = startTime - currentTime;
+			if (elapsedTime > TaskData.INPUT_DEADLINE) {
+				trial.result = Result.MISSED_DEADLINE;
+				return EndAttemptResult.MISSED_DEADLINE;
+			}
+			trial.time = elapsedTime;
+			if (input != null) {
+				if (input.equals(trial.correctReponse)) {
+					trial.result = Result.CORRECT;
+					return EndAttemptResult.CORRECT;
+				} else {
+					trial.result = Result.INCORRECT;
+					return EndAttemptResult.INCORRECT;
+				}
+			} else {
+				return EndAttemptResult.MISSED_DEADLINE;
+			}
+			
+		}
 	}
 
 	public static VBox getInstance(Stage primaryStage) {

@@ -57,8 +57,9 @@ public class TaskDataTester {
 					int congBalance = 0;
 					int vowelBalance = 0;
 					int oddBalance = 0;
-					for (int j=1; j<block.trials.size(); j++) {
-						Trial trial = block.trials.get(j);
+					Trial previous = block.first;
+					Trial trial = previous.next;
+					while (trial != null) {
 						if (trial.congruent) {
 							congBalance++; 
 						} else {
@@ -74,11 +75,12 @@ public class TaskDataTester {
 						} else {
 							oddBalance--;
 						}
-						if (trial.position.value < 2 != block.trials.get(j-1).position.value < 2) {
+						if (trial.position.value < 2 != previous.position.value < 2) {
 							switchBalance++;
 						} else {
 							switchBalance--;
 						}
+						trial = trial.next;
 					}
 					ltSwitchBalance += switchBalance;
 					ltCongBalance += congBalance;
@@ -88,19 +90,19 @@ public class TaskDataTester {
 					unbalancedCongBlocks += (congBalance != 0 ? 1 : 0);
 					unbalancedVowelBlocks += (vowelBalance != 0 ? 1 : 0);
 					unbalancedOddBlocks += (oddBalance != 0 ? 1 : 0);
-					if (Math.abs(((float)vowelBalance)/block.trials.size()) > Math.abs(largestUnbalancedVowelFraction)) {
-						largestUnbalancedVowelFraction = ((float)vowelBalance)/block.trials.size();
+					if (Math.abs(((float)vowelBalance)/block.type.numTrials) > Math.abs(largestUnbalancedVowelFraction)) {
+						largestUnbalancedVowelFraction = ((float)vowelBalance)/block.type.numTrials;
 					}
-					if (Math.abs(((float)oddBalance)/block.trials.size()) > Math.abs(largestUnbalancedOddFraction)) {
-						largestUnbalancedOddFraction = ((float)oddBalance)/block.trials.size();
+					if (Math.abs(((float)oddBalance)/block.type.numTrials) > Math.abs(largestUnbalancedOddFraction)) {
+						largestUnbalancedOddFraction = ((float)oddBalance)/block.type.numTrials;
 					}
 					if (vowelBalance != 0) {
 						totalUnbalancedVowels += Math.abs(vowelBalance);
-						totalUnbalancedVowelsBase += block.trials.size();
+						totalUnbalancedVowelsBase += block.type.numTrials;
 					}
 					if (oddBalance != 0) {
 						totalUnbalancedOdds += Math.abs(oddBalance);
-						totalUnbalancedOddsBase += block.trials.size();
+						totalUnbalancedOddsBase += block.type.numTrials;
 					}
 				}
 			}
