@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import code.TaskData.Trial.BlockType;
 import javafx.scene.input.KeyCode;
 /**
  * This class creates and stores the data to be used in the experiment:
@@ -115,6 +114,16 @@ public class TaskData {
 	 * if you want the program to work correctly :)
 	 */
 	
+	// The first task of the current set of experimental data.
+	public static SubTask first;
+	// The current task of the current set of experimental data.
+	private static SubTask current;
+	
+	// Returns the next task of the current set of experimental data.
+	public static SubTask next() {
+		return (current == null ? (current = first) : current instanceof End ? current : (current = current.next));
+	}
+	
 	private static Random randomizer = new Random();
 	
 	/**
@@ -122,6 +131,7 @@ public class TaskData {
 	 * experiment, including blocks of trials, instruction sets and pauses.
 	 */
 	public static abstract class SubTask{
+		// This is the task that will run after this task, or null if this is the last task.
 		public SubTask next;
 		
 		public SubTask() {}
@@ -136,29 +146,53 @@ public class TaskData {
 	 * as the instructions and the pause between the random and predictable trials.
 	 * @param randomFirst : Specifies whether the blocks with randomly-placed trials 
 	 * should come first (true) or second (false).
-	 * @return : Returns the first block in the experiment.
 	 */
-	public static SubTask createExperiment(boolean randomFirst) {
+	public static void createExperiment(boolean randomFirst) {
 		if (randomFirst) {
-			// Return the random trials followed by the predictable trials.
-			return new Instructions(
+			// Generate the random trials followed by the predictable trials.
+			first =  new Instructions(
 				generateBlock(BlockType.PRACTICE_RANDOM, 
 				generateBlock(BlockType.EXPERIMENTAL_RANDOM, 
 				new Pause(
 				generateBlock(BlockType.PRACTICE_PREDICTABLE,
-				generateBlock(BlockType.EXPERIMENTAL_PREDICTABLE, null))))));
+				generateBlock(BlockType.EXPERIMENTAL_PREDICTABLE, new End()))))));
 		} else {
-			// Return the predictable trials followed by the random trials.
-			return new Instructions(
+			// Generate the predictable trials followed by the random trials.
+			first = new Instructions(
 				generateBlock(BlockType.PRACTICE_PREDICTABLE, 
 				generateBlock(BlockType.EXPERIMENTAL_PREDICTABLE, 
 				new Pause(
 				generateBlock(BlockType.PRACTICE_RANDOM,
-				generateBlock(BlockType.EXPERIMENTAL_RANDOM, null))))));
+				generateBlock(BlockType.EXPERIMENTAL_RANDOM, new End()))))));
 		}
 	}
 	
-
+	/*
+	 *  These are the different types of blocks in an experiment.
+	 *  I know this looks confusing, but don't worry about it.
+	 *  Everything is fine.
+	 */
+	public enum BlockType {
+		PRACTICE_PREDICTABLE(PRACTICE_PREDICTABLE_TRIALS),
+		EXPERIMENTAL_PREDICTABLE(EXPERIMENTAL_PREDICTABLE_TRIALS),
+		PRACTICE_RANDOM(PRACTICE_RANDOM_TRIALS),
+		EXPERIMENTAL_RANDOM(EXPERIMENTAL_PREDICTABLE_TRIALS),
+		;
+		public int numTrials;
+		private BlockType(int n) {
+			/*
+			 * We need to generate one extra trial in each block, 
+			 * since the first trial will not be used when tallying the results.
+			 */
+			numTrials = n+1;
+		}
+		
+		@Override
+		public String toString() {
+			return name().toLowerCase().replace("_", ", ");
+		}
+		
+	}
 		
 	/**
 	 * This creates a block of the specified type.
@@ -168,7 +202,7 @@ public class TaskData {
 	 * @param next : The block which comes after this block.
 	 */
 	public static Trial generateBlock (BlockType type, SubTask nextTask) {
-		Trial first = null;
+		Trial firstTask = null;
 		Trial previous = null;
 		// This variable keeps track of which quadrant of the grid the current task is in
 		int quadrant = 0;
@@ -218,7 +252,7 @@ public class TaskData {
 				if (previous != null) {
 					previous.next = next;
 				} else {
-					first = next;
+					firstTask = next;
 				}
 				previous = next;
 			}
@@ -262,13 +296,13 @@ public class TaskData {
 				if (previous != null) {
 					previous.next = next;
 				} else {
-					first = next;
+					firstTask = next;
 				}
 				previous = next;
 			}
 		}
 		previous.next = nextTask;
-		return first;
+		return firstTask;
 	}
 	
 	/**
@@ -278,32 +312,6 @@ public class TaskData {
 	 * Each trial belongs to a set of trials called a block, and each trial records which block it belongs to.
 	 */
 	public static class Trial extends SubTask {
-		/*
-		 *  These are the different types of blocks in this experiment.
-		 *  I know this looks confusing, but don't worry about it.
-		 *  Everything is fine.
-		 */
-		public enum BlockType {
-			PRACTICE_PREDICTABLE(PRACTICE_PREDICTABLE_TRIALS),
-			EXPERIMENTAL_PREDICTABLE(EXPERIMENTAL_PREDICTABLE_TRIALS),
-			PRACTICE_RANDOM(PRACTICE_RANDOM_TRIALS),
-			EXPERIMENTAL_RANDOM(EXPERIMENTAL_PREDICTABLE_TRIALS),
-			;
-			public int numTrials;
-			private BlockType(int n) {
-				/*
-				 * We need to generate one extra trial in each block, 
-				 * since the first trial will not be used when tallying the results.
-				 */
-				numTrials = n+1;
-			}
-			
-			@Override
-			public String toString() {
-				return name().toLowerCase().replace("_", ", ");
-			}
-			
-		}
 		
 		// The block to which this particular trial belongs.
 		public BlockType type;
@@ -367,9 +375,6 @@ public class TaskData {
 		
 		// This variable indicates whether or not the user pressed the correct button in response to the trial.
 		public boolean correct = false;
-		
-		// This is the task which will be run after this trial, or null if this is the last one.
-		public SubTask next = null;
 		
 		/**
 		 * This creates a congruent or incongruent trial with the specified position.
@@ -462,5 +467,8 @@ public class TaskData {
 		public Instructions(SubTask nextTask) {
 			super(nextTask);
 		}
+	}
+	
+	public static class End extends SubTask {
 	}
 }

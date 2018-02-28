@@ -76,15 +76,7 @@ public class StartScreen extends HBox {
 		enterButton.setOnMouseReleased((e) -> {
 			selectedType = Integer.parseInt(experimentType.getSelectedToggle().getUserData().toString());
 			ActivityController.start(Activity.EXPERIMENT, stage);
-			/*ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
-			service.schedule(new Runnable() {
-				
-				@Override
-				public void run() {
-					System.exit(0);
-					
-				}
-			}, 10000, TimeUnit.MILLISECONDS);*/
+			ExperimentScreen.startExperiment();
 			
 		});
 		getChildren().add(layoutBox);

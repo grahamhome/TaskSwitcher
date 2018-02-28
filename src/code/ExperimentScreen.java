@@ -5,18 +5,22 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import code.TaskData.End;
 import code.TaskData.Instructions;
 import code.TaskData.Pause;
 import code.TaskData.SubTask;
 import code.TaskData.Trial;
 import code.TaskData.Trial.Position;
 import code.TaskData.Trial.Result;
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Border;
@@ -35,7 +39,6 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextBoundsType;
 import javafx.stage.Stage;
-import sun.security.x509.IssuingDistributionPointExtension;
 
 /**
  * This class creates the experiment screen which 
@@ -54,17 +57,21 @@ public class ExperimentScreen extends VBox {
 	
 	private static HBox box;
 	
-	private static VisualTrial currentTrial;
+	private static VisualTrial currentVisualTrial;
 	
-	private static synchronized VisualTrial getCurrentTrial() {
-		return currentTrial;
+	private static int currentTrialIndex = 0; // TODO: remove
+	
+	private static synchronized VisualTrial getCurrentVisualTrial() {
+		return currentVisualTrial;
 	}
 	
-	private static synchronized void setCurrentTrial(VisualTrial trial) {
-		currentTrial = trial;
+	private static synchronized void setCurrentVisualTrial(VisualTrial trial) {
+		currentTrialIndex++; // TODO: remove
+		currentVisualTrial = trial;
 	}
 	
 	private static AtomicBoolean listening = new AtomicBoolean(false);
+	private static TrialController trialController = new TrialController();
 	
 	private ExperimentScreen() {
 		setBackground(new Background(new BackgroundFill(Color.BLACK, null, null)));
@@ -89,41 +96,41 @@ public class ExperimentScreen extends VBox {
 		addControlLabels();
 		box.getChildren().add(gridGroup);
 		getChildren().addAll(new Rectangle(stage.getWidth(), gridOffsetY), box);
-		createKeyListener();
-		runExperiment();
 	}
 	
-	private void createKeyListener() {
+	private static void startInputListener() {
 		stage.getScene().setOnKeyPressed(e -> {
-			System.out.println("Got a keypress: " + e.getText()); // TODO: remove
-			if (listening.get() && (e.getCode().equals(TaskData.LEFT_KEY) || e.getCode().equals(TaskData.RIGHT_KEY))) {
-				System.out.println("Keypress was valid"); // TODO: remove
-				// We want to stop listening to key presses until the next trial becomes active.
-				listening.set(false);
-				try {
-					switch (getCurrentTrial().end(e.getCode())) {
-						case CORRECT:
-							System.out.println("Keypress was correct"); // TODO: remove
-							Thread.sleep(150);
-							runTask(getCurrentTrial().trial.next);
-							break;
-						case INCORRECT_PRACTICE:
-							System.out.println("practice trial failed"); // TODO: remove
-							// TODO: play sound here
-						case INCORRECT_EXPERIMENTAL:
-							System.out.println("Keypress was incorrect"); // TODO: remove
-							Thread.sleep(1500);
-							runTask(getCurrentTrial().trial.next);
-							break;
-						case ALREADY_SET:
-						case MISSED_DEADLINE:
-							break;
+			boolean wasListening;
+			synchronized (listening) {
+				if ((wasListening = listening.getAndSet(false)) && (e.getCode().equals(TaskData.LEFT_KEY) || e.getCode().equals(TaskData.RIGHT_KEY))) {
+					System.out.println("Keypress for trial " + currentTrialIndex + " was valid"); // TODO: remove
+					try {
+						switch (getCurrentVisualTrial().end(e.getCode())) {
+							case CORRECT:
+								System.out.println("Keypress was correct"); // TODO: remove
+								Thread.sleep(150);
+								runNextTask();
+								break;
+							case INCORRECT_PRACTICE:
+								System.out.println("practice trial failed"); // TODO: remove
+								// TODO: play sound here
+							case INCORRECT_EXPERIMENTAL:
+								System.out.println("Keypress was incorrect"); // TODO: remove
+								Thread.sleep(1500);
+								runNextTask();
+								break;
+							case ALREADY_SET:
+							case MISSED_DEADLINE:
+								break;
+						}
+					} catch (InterruptedException ex) {
+						ex.printStackTrace();
 					}
-				} catch (InterruptedException ex) {
-					ex.printStackTrace();
+				} else {
+					if (wasListening) { listening.set(true); }
+					System.out.println("Keypress for trial " + currentTrialIndex + " was invalid"); // TODO: remove
 				}
 			}
-			System.out.println("Keypress was invalid"); // TODO: remove
 		});
 	}
 	
@@ -201,30 +208,47 @@ public class ExperimentScreen extends VBox {
 		gridGroup.getChildren().add(controlsBox);
 	}
 	
-	private void runExperiment() {
-		runTask(TaskData.createExperiment((StartScreen.selectedType == 2)));
+	// Starts an experiment from the beginning
+	public static void startExperiment() {
+		trialController.start();
+		startInputListener();
+		TaskData.createExperiment((StartScreen.selectedType == 2));
+		runNextTask();
 	}
 	
-	private void runTask(SubTask task) {
+	// Pauses an experiment
+	public static void pauseExperiment() {
+		listening.set(false);
+		trialController.stop();
+	}
+	
+	// Resumes an experiment from the current location
+	public static void resumeExperiment() {
+		
+	}
+	
+	private static void runNextTask() {
 		System.out.println("Starting a task"); // TODO: remove
-		if (task == null) {
-			System.out.println("Experiment is over"); // TODO: remove
-			// TODO: End experiment here
-		} else if (task instanceof Trial) {
+		SubTask task = TaskData.next();
+		System.out.println(task);
+		if (task instanceof Trial) {
 			System.out.println("Sending new trial to render function"); // TODO: remove
 			renderTrial((Trial)task);
 		} else if (task instanceof Instructions) {
 			System.out.println("Showing instructions"); // TODO: remove
 			// TODO: show instructions screen here
-			runTask(task.next);
+			runNextTask();
 		} else if (task instanceof Pause) {
 			System.out.println("Pausing"); // TODO: remove
 			// TODO: show pause screen here
-			runTask(task.next);
+			runNextTask();
+		} else if (task instanceof End) {
+			System.out.println("Experiment is over"); // TODO: remove
+			// TODO: End experiment here
 		}
 	}
 	
-	public void renderTrial(Trial trial) {
+	public static void renderTrial(Trial trial) {
 		/**
 		 * We need an instance of the trial (and trial view) that will not change if the key listener
 		 * switches out the current trial. That's why this reference is used in the
@@ -243,7 +267,7 @@ public class ExperimentScreen extends VBox {
 						@Override
 						public void run() {
 							activeTrial.end(null);
-							runTask(activeTrial.trial.next);
+							runNextTask();
 						}
 					});
 				} else {
@@ -313,10 +337,8 @@ public class ExperimentScreen extends VBox {
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {
-					trialView.setVisible(true);
-					setCurrentTrial(VisualTrial.this);
-					// Now we can start listening to key presses for this trial.
-					listening.set(true);
+					setCurrentVisualTrial(VisualTrial.this);
+					trialController.showTrial.set(true);
 				}
 			});
 		}
@@ -350,12 +372,36 @@ public class ExperimentScreen extends VBox {
 			} else {
 				return EndAttemptResult.MISSED_DEADLINE;
 			}
-			
 		}
 	}
 
 	public static VBox getInstance(Stage primaryStage) {
 		stage = primaryStage;
 		return (instance == null ? instance = new ExperimentScreen() : instance);
+	}
+	
+	/**
+	 * A custom AnimationTimer which is responsible for showing trials
+	 * and enabling the keypress listener.
+	 *
+	 */
+	private static class TrialController extends AnimationTimer {
+		private boolean needListener = false;
+		
+		
+		// Switches to show and hide the current trial
+		private AtomicBoolean showTrial = new AtomicBoolean(false);
+
+		@Override
+		public void handle(long arg0) {
+			if (showTrial.getAndSet(false)) {
+				System.out.println("Showing trial " + currentTrialIndex);
+				getCurrentVisualTrial().trialView.setVisible(true);
+				needListener = true;
+			} else if (needListener) {
+				listening.set(true);
+				needListener = false;
+			}
+		}
 	}
 }
