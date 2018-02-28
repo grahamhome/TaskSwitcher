@@ -54,7 +54,7 @@ public class ExperimentScreen extends VBox {
 	private static Group gridGroup;
 	private static double gridOffsetX, gridOffsetY, gridSize;;
 	private static final double LINE_WIDTH = 5;
-	private static final Color FOREGROUND = Color.WHITE;
+	public static final Color FOREGROUND = Color.WHITE;
 	private static final double FONT_SIZE = 75;
 	
 	private static HBox box;
@@ -252,8 +252,8 @@ public class ExperimentScreen extends VBox {
 			runNextTask();
 		} else if (task instanceof Pause) {
 			System.out.println("Pausing"); // TODO: remove
-			// TODO: show pause screen here
-			runNextTask();
+			pauseExperiment();
+			ActivityController.start(Activity.PAUSE, stage);
 		} else if (task instanceof End) {
 			System.out.println("Experiment is over"); // TODO: remove
 			System.exit(0);
@@ -405,7 +405,7 @@ public class ExperimentScreen extends VBox {
 		private AtomicBoolean showTrial = new AtomicBoolean(false);
 
 		@Override
-		public void handle(long arg0) {
+		public void handle(long now) {
 			if (showTrial.getAndSet(false)) {
 				System.out.println("Showing trial " + currentTrialIndex);
 				getCurrentVisualTrial().trialView.setVisible(true);

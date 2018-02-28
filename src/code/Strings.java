@@ -17,5 +17,6 @@ public class Strings {
 	public static final String PRACTICE_ENDED_EXPERIMENT_STARTING = STYLE + "You have reached the end of the practice trials. Please ask the researcher now if you have any questions. You may press the Enter key to continue to the next block of trials." + END;
 	
 	public static final String EXPERIMENT_ENDED = STYLE + "You have reached the end of the experiment. Thank you very much for your participation. Please let the researcher know that you are done.";
-
+	
+	public static final String PAUSE_MESSAGE = "Please refrain from other activities.";
 }

@@ -8,6 +8,7 @@ public class ActivityController {
 		START,
 		EXPERIMENT,
 		MESSAGE,
+		PAUSE,
 		;
 	}
 	
@@ -25,6 +26,9 @@ public class ActivityController {
 			break;
 		case MESSAGE:
 			stage.getScene().setRoot(new MessageScreen(stage, message));
+			break;
+		case PAUSE:
+			stage.getScene().setRoot(new PauseScreen(stage));
 			break;
 		}
 	}

@@ -35,13 +35,13 @@ public class TaskData {
 	 */
 	
 	// Number of pairs in the predictable practice block
-	public static int PRACTICE_PREDICTABLE_TRIALS = 40;
+	public static int PRACTICE_PREDICTABLE_TRIALS = 4;//40;
 	// Number of pairs in the predictable experimental block
-	public static int EXPERIMENTAL_PREDICTABLE_TRIALS = 152;
+	public static int EXPERIMENTAL_PREDICTABLE_TRIALS = 4;//152;
 	// Number of pairs in the random practice block
-	public static int PRACTICE_RANDOM_TRIALS = 40;
+	public static int PRACTICE_RANDOM_TRIALS = 4;//40;
 	// Number of pairs in the random experimental block
-	public static int EXPERIMENTAL_RANDOM_TRIALS = 152;
+	public static int EXPERIMENTAL_RANDOM_TRIALS = 4;//152;
 	
 	/*
 	 * Percentages:
@@ -64,7 +64,7 @@ public class TaskData {
 	// Length of time between number/letter pair appearances if no input is detected
 	public static final int NO_INPUT_PAUSE = 1500;
 	// Length of time to pause between the predictable and random tests
-	public static final int BREAK = 12000;
+	public static final int BREAK = 60000;//120000;
 	
 	/*
 	 * Data Options:
