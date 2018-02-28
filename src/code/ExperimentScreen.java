@@ -5,8 +5,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import code.ActivityController.Activity;
 import code.TaskData.End;
 import code.TaskData.Instructions;
+import code.TaskData.Message;
 import code.TaskData.Pause;
 import code.TaskData.SubTask;
 import code.TaskData.Trial;
@@ -56,6 +58,8 @@ public class ExperimentScreen extends VBox {
 	private static final double FONT_SIZE = 75;
 	
 	private static HBox box;
+	
+	private static boolean hasStarted = false;
 	
 	private static VisualTrial currentVisualTrial;
 	
@@ -134,6 +138,11 @@ public class ExperimentScreen extends VBox {
 		});
 	}
 	
+	private static void stopInputListener() {
+		listening.set(false);
+		stage.getScene().setOnKeyPressed(null);
+	}
+	
 	private void addIndicatorLabels() {
 		Label topLabel = new Label("Letter");
 		topLabel.setFont(Font.font("System", FontWeight.BOLD, 30));
@@ -208,23 +217,21 @@ public class ExperimentScreen extends VBox {
 		gridGroup.getChildren().add(controlsBox);
 	}
 	
-	// Starts an experiment from the beginning
+	// Starts an experiment from the beginning or the current location (if previously paused)
 	public static void startExperiment() {
+		if (!hasStarted) {
+			TaskData.createExperiment((StartScreen.selectedType == 2));
+			hasStarted = true;
+		}
 		trialController.start();
 		startInputListener();
-		TaskData.createExperiment((StartScreen.selectedType == 2));
 		runNextTask();
 	}
 	
 	// Pauses an experiment
 	public static void pauseExperiment() {
-		listening.set(false);
+		stopInputListener();
 		trialController.stop();
-	}
-	
-	// Resumes an experiment from the current location
-	public static void resumeExperiment() {
-		
 	}
 	
 	private static void runNextTask() {
@@ -234,6 +241,11 @@ public class ExperimentScreen extends VBox {
 		if (task instanceof Trial) {
 			System.out.println("Sending new trial to render function"); // TODO: remove
 			renderTrial((Trial)task);
+		} else if (task instanceof Message) {
+			System.out.println("Showing message"); // TODO: remove
+			pauseExperiment();
+			ActivityController.message = ((Message)task).message;
+			ActivityController.start(Activity.MESSAGE, stage);
 		} else if (task instanceof Instructions) {
 			System.out.println("Showing instructions"); // TODO: remove
 			// TODO: show instructions screen here
@@ -244,7 +256,7 @@ public class ExperimentScreen extends VBox {
 			runNextTask();
 		} else if (task instanceof End) {
 			System.out.println("Experiment is over"); // TODO: remove
-			// TODO: End experiment here
+			System.exit(0);
 		}
 	}
 	

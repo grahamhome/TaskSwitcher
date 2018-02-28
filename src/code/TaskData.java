@@ -151,19 +151,31 @@ public class TaskData {
 		if (randomFirst) {
 			// Generate the random trials followed by the predictable trials.
 			first =  new Instructions(
+				new Message(Strings.PRACTICE_RANDOM_STARTING, 
 				generateBlock(BlockType.PRACTICE_RANDOM, 
+				new Message(Strings.PRACTICE_ENDED_EXPERIMENT_STARTING,
 				generateBlock(BlockType.EXPERIMENTAL_RANDOM, 
 				new Pause(
+				new Message(Strings.PRACTICE_PREDICTABLE_STARTING,
 				generateBlock(BlockType.PRACTICE_PREDICTABLE,
-				generateBlock(BlockType.EXPERIMENTAL_PREDICTABLE, new End()))))));
+				new Message(Strings.PRACTICE_ENDED_EXPERIMENT_STARTING,
+				generateBlock(BlockType.EXPERIMENTAL_PREDICTABLE, 
+				new Message(Strings.EXPERIMENT_ENDED,
+				new End())))))))))));
 		} else {
 			// Generate the predictable trials followed by the random trials.
 			first = new Instructions(
+				new Message(Strings.PRACTICE_PREDICTABLE_STARTING,
 				generateBlock(BlockType.PRACTICE_PREDICTABLE, 
+				new Message(Strings.PRACTICE_ENDED_EXPERIMENT_STARTING,
 				generateBlock(BlockType.EXPERIMENTAL_PREDICTABLE, 
 				new Pause(
+				new Message(Strings.PRACTICE_RANDOM_STARTING,
 				generateBlock(BlockType.PRACTICE_RANDOM,
-				generateBlock(BlockType.EXPERIMENTAL_RANDOM, new End()))))));
+				new Message(Strings.PRACTICE_ENDED_EXPERIMENT_STARTING,
+				generateBlock(BlockType.EXPERIMENTAL_RANDOM, 
+				new Message(Strings.EXPERIMENT_ENDED,
+				new End())))))))))));
 		}
 	}
 	
@@ -466,6 +478,14 @@ public class TaskData {
 	public static class Instructions extends SubTask {
 		public Instructions(SubTask nextTask) {
 			super(nextTask);
+		}
+	}
+	
+	public static class Message extends SubTask {
+		public String message;
+		public Message(String messageContent, SubTask nextTask) {
+			super(nextTask);
+			message = messageContent;
 		}
 	}
 	

@@ -72,15 +72,14 @@ public class StartScreen extends HBox {
 		layoutBox.setMaxWidth(250);
 		layoutBox.setMinWidth(250);
 		layoutBox.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
-		layoutBox.relocate((stage.getWidth()-250)/2, (stage.getHeight()-250)/2);
+		layoutBox.relocate((stage.getWidth()-250)/2, (stage.getHeight()-200)/2);
 		enterButton.setOnMouseReleased((e) -> {
 			selectedType = Integer.parseInt(experimentType.getSelectedToggle().getUserData().toString());
 			ActivityController.start(Activity.EXPERIMENT, stage);
-			ExperimentScreen.startExperiment();
 			
 		});
 		getChildren().add(layoutBox);
-	};
+	}
 
 	public static HBox getInstance(Stage primaryStage) {
 		stage = primaryStage;
