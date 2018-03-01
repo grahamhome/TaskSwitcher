@@ -116,10 +116,10 @@ public class ResultsReporter {
 			results.append("block statistics:").append(System.lineSeparator());
 			results.append("average response time:").append(System.lineSeparator());
 			results.append("switch trials,non-switch trials,congruent trials,incongruent trials").append(System.lineSeparator());
-			results.append(totalSwitch>0 ? totalResponseTimeSwitch/totalSwitch : 0).append(",");
-			results.append(totalNonSwitch>0 ? totalResponseTimeNonSwitch/totalNonSwitch : 0).append(",");
-			results.append(totalCongruent>0 ? totalResponseTimeCongruent/totalCongruent : 0).append(",");
-			results.append(totalIncongruent>0 ? totalResponseTimeIncongruent/totalIncongruent : 0).append(System.lineSeparator());
+			results.append(totalSwitch>0 ? Math.round(totalResponseTimeSwitch/totalSwitch) : "0.000").append(",");
+			results.append(totalNonSwitch>0 ? Math.round(totalResponseTimeNonSwitch/totalNonSwitch) : "0.000").append(",");
+			results.append(totalCongruent>0 ? Math.round(totalResponseTimeCongruent/totalCongruent) : "0.000").append(",");
+			results.append(totalIncongruent>0 ? Math.round(totalResponseTimeIncongruent/totalIncongruent) : "0.000").append(System.lineSeparator());
 			results.append("total number of errors:").append(System.lineSeparator());
 			results.append("switch trials,non-switch trials,congruent trials,incongruent trials").append(System.lineSeparator());
 			results.append(errorsSwitch).append(",");

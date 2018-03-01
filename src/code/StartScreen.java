@@ -3,6 +3,7 @@ package code;
 import code.ActivityController.Activity;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
@@ -77,6 +78,8 @@ public class StartScreen extends HBox {
 		enterButton.setOnMouseReleased((e) -> {
 			subjectNumber = numberField.getText();
 			selectedType = Integer.parseInt(experimentType.getSelectedToggle().getUserData().toString());
+			// We won't be needing this anymore...
+			stage.getScene().setCursor(Cursor.NONE);
 			ActivityController.start(Activity.EXPERIMENT, stage);
 			
 		});

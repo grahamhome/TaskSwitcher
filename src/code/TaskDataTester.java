@@ -1,4 +1,4 @@
-package code;
+/*package code;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -143,4 +143,4 @@ public class TaskDataTester {
 			e.printStackTrace();
 		}
 	}
-}
+}*/

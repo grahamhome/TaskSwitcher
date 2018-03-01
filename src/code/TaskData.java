@@ -201,7 +201,7 @@ public class TaskData {
 		
 		@Override
 		public String toString() {
-			return name().toLowerCase().replace("_", ", ");
+			return name().toLowerCase().replace("_", " ");
 		}
 		
 	}
@@ -383,13 +383,15 @@ public class TaskData {
 		// The potential results of a trial.
 		public enum Result {
 			MISSED_DEADLINE,
+			NO_INPUT,
 			CORRECT,
 			INCORRECT,
+			NOT_SET,
 			;
 		}
 		
 		// The result of this trial.
-		public Result result;
+		public Result result = Result.NOT_SET;
 		
 		// The letter which was generated most recently (so it won't be used in the next trial to be generated)
 		// Starts as '@', which is why that may not be included in the list of letters at the top of this file.
@@ -397,7 +399,8 @@ public class TaskData {
 		// The number which was generated most recently (so it won't be used in the next trial to be generated)
 		// Starts as '@', which may not be included in the list of numbers at the top of this file (not that you would do that anyway).
 		private static char lastNumber = '@';
-		
+		// The trial result which was saved most recently (so that trials after error trials can be ignored in the statistics)
+		private static Result lastResult = Result.NOT_SET;
 		/**
 		 * This creates a congruent or incongruent trial with the specified position.
 		 * @param quadrant : A number 0-3 where 0 = upper left, 1 = upper right, 2 = lower right, 3 = lower left.
@@ -464,6 +467,26 @@ public class TaskData {
 				correctReponse = (hasOdd ? ODD_KEY : EVEN_KEY);
 				break;
 			}
+		}
+		
+		public synchronized Result end(KeyCode input, long elapsedTime) {
+			// This is true if the trial has already ended.
+			if (!result.equals(Result.NOT_SET)) {
+				return result;
+			}
+			counted = (lastResult != Result.INCORRECT);
+			// This is true if the trial received no input.
+			if (input.equals(KeyCode.CANCEL)) {
+				return (lastResult = (result = Result.NO_INPUT));
+			}
+			// This is true if the trial received input after the input deadline.
+			if (elapsedTime > INPUT_DEADLINE) {
+				return (lastResult = (result = Result.MISSED_DEADLINE));
+			}
+			// This is true if the trial received input before the input deadline.
+			time = elapsedTime;
+			actualResponse = input;
+			return (lastResult = (result = (input.equals(correctReponse) ? Result.CORRECT : Result.INCORRECT)));
 		}
 		
 		public boolean isPractice() {

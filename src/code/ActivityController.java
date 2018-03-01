@@ -1,5 +1,6 @@
 package code;
 
+import javafx.application.Platform;
 import javafx.stage.Stage;
 
 public class ActivityController {
@@ -16,20 +17,25 @@ public class ActivityController {
 	public static String message;
 	
 	public static void start(Activity activity, Stage stage) {
-		switch (activity) {
-		case START:
-			stage.getScene().setRoot(StartScreen.getInstance(stage));
-			break;
-		case EXPERIMENT:
-			stage.getScene().setRoot(ExperimentScreen.getInstance(stage));
-			ExperimentScreen.startExperiment();
-			break;
-		case MESSAGE:
-			stage.getScene().setRoot(new MessageScreen(stage, message));
-			break;
-		case PAUSE:
-			stage.getScene().setRoot(new BreakScreen(stage));
-			break;
-		}
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				switch (activity) {
+				case START:
+					stage.getScene().setRoot(StartScreen.getInstance(stage));
+					break;
+				case EXPERIMENT:
+					stage.getScene().setRoot(ExperimentScreen.getInstance(stage));
+					ExperimentScreen.startExperiment();
+					break;
+				case MESSAGE:
+					stage.getScene().setRoot(new MessageScreen(stage, message));
+					break;
+				case PAUSE:
+					stage.getScene().setRoot(new BreakScreen(stage));
+					break;
+				}
+			}
+		});
 	}
 }

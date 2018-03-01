@@ -59,7 +59,7 @@ public class ExperimentScreen extends VBox {
 	
 	private static boolean hasStarted = false;
 	
-	private static VisualTrial currentVisualTrial;
+	private static VisualTrial currentVisualTrial = null;
 	
 	private static int currentTrialIndex = 0; // TODO: remove
 	
@@ -102,30 +102,43 @@ public class ExperimentScreen extends VBox {
 	
 	private static void startInputListener() {
 		stage.getScene().setOnKeyPressed(e -> {
+			long currentTime = System.currentTimeMillis();
 			boolean wasListening;
 			synchronized (listening) {
 				if ((wasListening = listening.getAndSet(false)) && (e.getCode().equals(TaskData.LEFT_KEY) || e.getCode().equals(TaskData.RIGHT_KEY))) {
 					System.out.println("Keypress for trial " + currentTrialIndex + " was valid"); // TODO: remove
 					try {
-						switch (getCurrentVisualTrial().end(e.getCode())) {
+						switch (getCurrentVisualTrial().trial.end(e.getCode(), currentTime-getCurrentVisualTrial().startTime)) {
 							case CORRECT:
 								System.out.println("Keypress was correct"); // TODO: remove
-								Thread.sleep(150);
-								runNextTask();
+								gridGroup.getChildren().remove(getCurrentVisualTrial().trialView);
+								ScheduledExecutorService service1 = Executors.newSingleThreadScheduledExecutor();
+								service1.schedule(new Runnable() {
+									@Override
+									public void run() {
+										runNextTask();
+									}
+								}, TaskData.CORRECT_INPUT_PAUSE, TimeUnit.MILLISECONDS);
 								break;
-							case INCORRECT_PRACTICE:
-								System.out.println("practice trial failed"); // TODO: remove
-								// TODO: play sound here
-							case INCORRECT_EXPERIMENTAL:
+							case INCORRECT:
 								System.out.println("Keypress was incorrect"); // TODO: remove
-								Thread.sleep(1500);
-								runNextTask();
+								if (getCurrentVisualTrial().trial.isPractice()) {
+									System.out.println("practice trial failed"); // TODO: remove
+									// TODO: play sound here
+								} 
+								gridGroup.getChildren().remove(getCurrentVisualTrial().trialView);
+								ScheduledExecutorService service2 = Executors.newSingleThreadScheduledExecutor();
+								service2.schedule(new Runnable() {
+									@Override
+									public void run() {
+										runNextTask();
+									}
+								}, TaskData.INCORRECT_INPUT_PAUSE, TimeUnit.MILLISECONDS);
 								break;
-							case ALREADY_SET:
-							case MISSED_DEADLINE:
+							default:
 								break;
 						}
-					} catch (InterruptedException ex) {
+					} catch (Exception ex) {
 						ex.printStackTrace();
 					}
 				} else {
@@ -271,18 +284,16 @@ public class ExperimentScreen extends VBox {
 		service.schedule(new Runnable() {
 			@Override
 			public void run() {
-				if (!activeTrial.ended.get()) {
-					System.out.println("trial timed out");
-					System.out.println("starting next task from service");
+				Result result = activeTrial.trial.end(KeyCode.CANCEL, -1);
+				System.out.println(result);
+				if (result.equals(Result.NO_INPUT) || result.equals(Result.MISSED_DEADLINE)) {
 					Platform.runLater(new Runnable() {
 						@Override
 						public void run() {
-							activeTrial.end(KeyCode.CANCEL);
-							runNextTask();
+							gridGroup.getChildren().remove(activeTrial.trialView);
 						}
 					});
-				} else {
-					System.out.println("Trial did not time out");
+					runNextTask();
 				}
 			}
 		}, TaskData.NO_INPUT_DURATION, TimeUnit.MILLISECONDS);
@@ -293,16 +304,6 @@ public class ExperimentScreen extends VBox {
 	 */
 	public static class VisualTrial {
 		
-		// The potential results of attempting to end a trial
-		public enum EndAttemptResult {
-			MISSED_DEADLINE,
-			ALREADY_SET,
-			CORRECT,
-			INCORRECT_EXPERIMENTAL,
-			INCORRECT_PRACTICE,
-			;
-		}
-		
 		// The Trial object.
 		private Trial trial;
 		// The object used to visually depict the Trial object.
@@ -310,8 +311,6 @@ public class ExperimentScreen extends VBox {
 		
 		// The time at which the trial appeared
 		private long startTime = 0;
-		// Indicates whether or not the trial has ended
-		private AtomicBoolean ended = new AtomicBoolean(false);
 		
 		public VisualTrial(Trial trial) {
 			this.trial = trial;
@@ -346,40 +345,6 @@ public class ExperimentScreen extends VBox {
 		public synchronized void start() {
 			setCurrentVisualTrial(VisualTrial.this);
 			trialController.showTrial.set(true);
-			startTime = System.currentTimeMillis(); // TODO: Important! Move all start-time-stamping into trialController for precision
-		}
-		
-		public synchronized EndAttemptResult end(KeyCode input) {
-			long currentTime = System.currentTimeMillis(); // TODO: Important! Move all end-time-stamping into key-press-listener and timeout service for precision
-			if (ended.get()) {
-				return EndAttemptResult.ALREADY_SET;
-			}
-			long elapsedTime = currentTime - startTime;
-			if (!(input == KeyCode.CANCEL) && elapsedTime > TaskData.INPUT_DEADLINE) {
-				trial.result = Result.MISSED_DEADLINE;
-				return EndAttemptResult.MISSED_DEADLINE;
-			}
-			ended.set(true);
-			Platform.runLater(new Runnable() {
-				@Override
-				public void run() {
-					gridGroup.getChildren().remove(trialView); // TODO: Make this a part of trialController's show trial logic
-				}
-			});
-			if (input.equals(KeyCode.CANCEL)) {
-				trial.result = Result.MISSED_DEADLINE;
-				return EndAttemptResult.MISSED_DEADLINE;
-			}
-			trial.time = elapsedTime;
-			trial.actualResponse = input;
-			if (input.equals(trial.correctReponse)) {
-				trial.result = Result.CORRECT;
-				return EndAttemptResult.CORRECT;
-			} else {
-				trial.result = Result.INCORRECT;
-				return (trial.isPractice() ? EndAttemptResult.INCORRECT_PRACTICE : EndAttemptResult.INCORRECT_EXPERIMENTAL);
-			}
-			
 		}
 	}
 
@@ -403,8 +368,8 @@ public class ExperimentScreen extends VBox {
 		@Override
 		public void handle(long now) {
 			if (showTrial.getAndSet(false)) {
-				System.out.println("Showing trial " + currentTrialIndex);
 				getCurrentVisualTrial().trialView.setVisible(true);
+				getCurrentVisualTrial().startTime = System.currentTimeMillis();
 				needListener = true;
 			} else if (needListener) {
 				listening.set(true);
