@@ -61,14 +61,11 @@ public class ExperimentScreen extends VBox {
 	
 	private static VisualTrial currentVisualTrial = null;
 	
-	private static int currentTrialIndex = 0; // TODO: remove
-	
 	private static synchronized VisualTrial getCurrentVisualTrial() {
 		return currentVisualTrial;
 	}
 	
 	private static synchronized void setCurrentVisualTrial(VisualTrial trial) {
-		currentTrialIndex++; // TODO: remove
 		currentVisualTrial = trial;
 	}
 	
