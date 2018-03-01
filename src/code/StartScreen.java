@@ -31,7 +31,7 @@ public class StartScreen extends HBox {
 	public static String subjectNumber;
 	
 	private StartScreen() {
-		Config.load();
+		//Config.load();
 		setBackground(new Background(new BackgroundFill(Color.BLACK, null, null)));
 		setAlignment(Pos.CENTER);
 		Label title = new Label("Configuration");
@@ -116,7 +116,7 @@ public class StartScreen extends HBox {
 			Config.practiceTrialCount = Integer.parseInt(practiceTrialCountField.getText());
 			Config.experimentalTrialCount = Integer.parseInt(experimentTrialCountField.getText());
 			Config.breakDuration = (Integer.parseInt(breakMinutesField.getText())*60000) + (Integer.parseInt(breakSecondsField.getText())*1000);
-			Config.save();
+			//Config.save();
 			// We won't be needing this anymore...
 			stage.getScene().setCursor(Cursor.NONE);
 			ActivityController.start(Activity.EXPERIMENT, stage);

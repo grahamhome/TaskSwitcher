@@ -7,9 +7,9 @@ import java.io.PrintWriter;
 
 public class Config {
 	
-	public static int practiceTrialCount = 0;
-	public static int experimentalTrialCount = 0;
-	public static int breakDuration = 0;
+	public static int practiceTrialCount = 40;
+	public static int experimentalTrialCount = 200;
+	public static int breakDuration = 120000;
 	
 	public static void load() {
 		try {

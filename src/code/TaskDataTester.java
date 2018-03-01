@@ -1,6 +1,6 @@
-/*package code;
+package code;
 
-import java.io.FileNotFoundException;
+/*import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Random;
 
 import code.TaskData.Block;
-import code.TaskData.Trial;
+import code.TaskData.Trial;*/
 
-public class TaskDataTester {
+public class TaskDataTester {}/*
 	private static Random randomizer = new Random();
 	public static void test() {
 		try {
