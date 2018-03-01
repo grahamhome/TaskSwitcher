@@ -398,9 +398,6 @@ public class TaskData {
 		// Starts as '@', which may not be included in the list of numbers at the top of this file (not that you would do that anyway).
 		private static char lastNumber = '@';
 		
-		// This variable indicates whether or not the user pressed the correct button in response to the trial.
-		public boolean correct = false;
-		
 		/**
 		 * This creates a congruent or incongruent trial with the specified position.
 		 * @param quadrant : A number 0-3 where 0 = upper left, 1 = upper right, 2 = lower right, 3 = lower left.

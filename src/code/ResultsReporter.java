@@ -9,6 +9,7 @@ import code.TaskData.BlockType;
 import code.TaskData.End;
 import code.TaskData.SubTask;
 import code.TaskData.Trial;
+import code.TaskData.Trial.Result;
 import javafx.scene.input.KeyCode;
 
 /**
@@ -33,9 +34,8 @@ public class ResultsReporter {
 					results.append(blockResults.report());
 					blockResults = new BlockResults();
 					currentBlockType = trial.type;
-				} else {
-					blockResults.add(trial);
 				}
+				blockResults.add(trial);
 			}
 			task = task.next;
 		}
@@ -72,38 +72,40 @@ public class ResultsReporter {
 		
 		public void add(Trial trial) {
 			trials.add(trial);
-			if (trial.switching) {
-				if (trial.time >= 0) {
-					totalSwitch++;
-					totalResponseTimeSwitch += (trial.time);
+			if (trial.counted) {
+				if (trial.switching) {
+					if (trial.time >= 0) {
+						totalSwitch++;
+						totalResponseTimeSwitch += (trial.time);
+					}
+					if (!trial.result.equals(Result.CORRECT)) {
+						errorsSwitch++;
+					}
+				} else {
+					if (trial.time >= 0) {
+						totalNonSwitch++;
+						totalResponseTimeNonSwitch += (trial.time);
+					}
+					if (!trial.result.equals(Result.CORRECT)) {
+						errorsNonSwitch++;
+					}
 				}
-				if (!trial.correct) {
-					errorsSwitch++;
-				}
-			} else {
-				if (trial.time >= 0) {
-					totalNonSwitch++;
-					totalResponseTimeNonSwitch += (trial.time);
-				}
-				if (!trial.correct) {
-					errorsNonSwitch++;
-				}
-			}
-			if (trial.congruent) {
-				if (trial.time >= 0) {
-					totalCongruent++;
-					totalResponseTimeCongruent += (trial.time);
-				}
-				if (!trial.correct) {
-					errorsCongruent++;
-				}
-			} else {
-				if (trial.time >= 0) {
-					totalIncongruent++;
-					totalResponseTimeIncongruent += (trial.time);
-				}
-				if (!trial.correct) {
-					errorsIncongruent++;
+				if (trial.congruent) {
+					if (trial.time >= 0) {
+						totalCongruent++;
+						totalResponseTimeCongruent += (trial.time);
+					}
+					if (!trial.result.equals(Result.CORRECT)) {
+						errorsCongruent++;
+					}
+				} else {
+					if (trial.time >= 0) {
+						totalIncongruent++;
+						totalResponseTimeIncongruent += (trial.time);
+					}
+					if (!trial.result.equals(Result.CORRECT)) {
+						errorsIncongruent++;
+					}
 				}
 			}
 		}
@@ -131,7 +133,7 @@ public class ResultsReporter {
 				.append(trial.position).append(",")
 				.append((trial.congruent ? "congruent" : "incongruent")).append(",")
 				.append(trial.actualResponse.equals(KeyCode.CANCEL) ? "none" : trial.actualResponse.equals(TaskData.LEFT_KEY) ? TaskData.LEFT_KEY_NAME : TaskData.RIGHT_KEY_NAME).append(",")
-				.append(trial.correct ? "yes" : "no").append(",")
+				.append(trial.result.equals(Result.CORRECT) ? "yes" : "no").append(",")
 				.append(trial.time > 0 ? trial.time : "none").append(",")
 				.append(trial.counted ? "yes" : "no").append(System.lineSeparator());
 			}

@@ -277,7 +277,7 @@ public class ExperimentScreen extends VBox {
 					Platform.runLater(new Runnable() {
 						@Override
 						public void run() {
-							activeTrial.end(null);
+							activeTrial.end(KeyCode.CANCEL);
 							runNextTask();
 						}
 					});
@@ -344,45 +344,42 @@ public class ExperimentScreen extends VBox {
 		}
 		
 		public synchronized void start() {
-			startTime = System.currentTimeMillis();
-			Platform.runLater(new Runnable() {
-				@Override
-				public void run() {
-					setCurrentVisualTrial(VisualTrial.this);
-					trialController.showTrial.set(true);
-				}
-			});
+			setCurrentVisualTrial(VisualTrial.this);
+			trialController.showTrial.set(true);
+			startTime = System.currentTimeMillis(); // TODO: Important! Move all start-time-stamping into trialController for precision
 		}
 		
 		public synchronized EndAttemptResult end(KeyCode input) {
-			long currentTime = System.currentTimeMillis();
+			long currentTime = System.currentTimeMillis(); // TODO: Important! Move all end-time-stamping into key-press-listener and timeout service for precision
 			if (ended.get()) {
 				return EndAttemptResult.ALREADY_SET;
+			}
+			long elapsedTime = currentTime - startTime;
+			if (!(input == KeyCode.CANCEL) && elapsedTime > TaskData.INPUT_DEADLINE) {
+				trial.result = Result.MISSED_DEADLINE;
+				return EndAttemptResult.MISSED_DEADLINE;
 			}
 			ended.set(true);
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {
-					gridGroup.getChildren().remove(trialView);
+					gridGroup.getChildren().remove(trialView); // TODO: Make this a part of trialController's show trial logic
 				}
 			});
-			long elapsedTime = startTime - currentTime;
-			if (elapsedTime > TaskData.INPUT_DEADLINE) {
+			if (input.equals(KeyCode.CANCEL)) {
 				trial.result = Result.MISSED_DEADLINE;
 				return EndAttemptResult.MISSED_DEADLINE;
 			}
 			trial.time = elapsedTime;
-			if (input != null) {
-				if (input.equals(trial.correctReponse)) {
-					trial.result = Result.CORRECT;
-					return EndAttemptResult.CORRECT;
-				} else {
-					trial.result = Result.INCORRECT;
-					return (trial.isPractice() ? EndAttemptResult.INCORRECT_PRACTICE : EndAttemptResult.INCORRECT_EXPERIMENTAL);
-				}
+			trial.actualResponse = input;
+			if (input.equals(trial.correctReponse)) {
+				trial.result = Result.CORRECT;
+				return EndAttemptResult.CORRECT;
 			} else {
-				return EndAttemptResult.MISSED_DEADLINE;
+				trial.result = Result.INCORRECT;
+				return (trial.isPractice() ? EndAttemptResult.INCORRECT_PRACTICE : EndAttemptResult.INCORRECT_EXPERIMENTAL);
 			}
+			
 		}
 	}
 
