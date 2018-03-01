@@ -32,10 +32,6 @@ public class MessageScreen extends HBox {
 		setBackground(new Background(new BackgroundFill(Color.BLACK, null, null)));
 		setAlignment(Pos.CENTER);
 		WebView messageView = new WebView();
-		/*messageView.setMinWidth(Region.USE_PREF_SIZE);
-		messageView.setMaxWidth(Region.USE_PREF_SIZE);
-		messageView.setMinHeight(Region.USE_PREF_SIZE);
-		messageView.setMaxHeight(Region.USE_PREF_SIZE);*/
 		messageView.getEngine().loadContent(messageText);
 		VBox layoutBox = new VBox(20, messageView);
 		layoutBox.setPadding(new Insets(0,10,10,10));

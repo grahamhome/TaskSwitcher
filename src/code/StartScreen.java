@@ -27,6 +27,7 @@ public class StartScreen extends HBox {
 	private static Stage stage;
 	private static StartScreen instance;
 	public static int selectedType;
+	public static String subjectNumber;
 	
 	private StartScreen() {
 		setBackground(new Background(new BackgroundFill(Color.BLACK, null, null)));
@@ -74,6 +75,7 @@ public class StartScreen extends HBox {
 		layoutBox.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
 		layoutBox.relocate((stage.getWidth()-250)/2, (stage.getHeight()-200)/2);
 		enterButton.setOnMouseReleased((e) -> {
+			subjectNumber = numberField.getText();
 			selectedType = Integer.parseInt(experimentType.getSelectedToggle().getUserData().toString());
 			ActivityController.start(Activity.EXPERIMENT, stage);
 			

@@ -28,7 +28,7 @@ public class ActivityController {
 			stage.getScene().setRoot(new MessageScreen(stage, message));
 			break;
 		case PAUSE:
-			stage.getScene().setRoot(new PauseScreen(stage));
+			stage.getScene().setRoot(new BreakScreen(stage));
 			break;
 		}
 	}

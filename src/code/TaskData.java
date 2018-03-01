@@ -155,7 +155,7 @@ public class TaskData {
 				generateBlock(BlockType.PRACTICE_RANDOM, 
 				new Message(Strings.PRACTICE_ENDED_EXPERIMENT_STARTING,
 				generateBlock(BlockType.EXPERIMENTAL_RANDOM, 
-				new Pause(
+				new Break(
 				new Message(Strings.PRACTICE_PREDICTABLE_STARTING,
 				generateBlock(BlockType.PRACTICE_PREDICTABLE,
 				new Message(Strings.PRACTICE_ENDED_EXPERIMENT_STARTING,
@@ -169,7 +169,7 @@ public class TaskData {
 				generateBlock(BlockType.PRACTICE_PREDICTABLE, 
 				new Message(Strings.PRACTICE_ENDED_EXPERIMENT_STARTING,
 				generateBlock(BlockType.EXPERIMENTAL_PREDICTABLE, 
-				new Pause(
+				new Break(
 				new Message(Strings.PRACTICE_RANDOM_STARTING,
 				generateBlock(BlockType.PRACTICE_RANDOM,
 				new Message(Strings.PRACTICE_ENDED_EXPERIMENT_STARTING,
@@ -250,6 +250,7 @@ public class TaskData {
 		 */
 		congruentTrialIndices = congruentTrialIndices.subList(0, type.numTrials/2);
 		switchTrialIndices = switchTrialIndices.subList(0, type.numTrials/2);
+		
 		/*
 		 * Now we're ready to generate the trials for this block.
 		 * First we check to see if we are generating predictably-placed or randomly-placed trials.
@@ -260,7 +261,7 @@ public class TaskData {
 			 * their congruence or incongruence, and whether or not they will be counted in the experimental results.
 			 */
 			for (int i=0; i<type.numTrials; i++) {
-				Trial next = new Trial((quadrant++)%4, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0), type);
+				Trial next = new Trial((quadrant++)%4, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0), ((i>0 && quadrant==0) || quadrant==2),  type);
 				if (previous != null) {
 					previous.next = next;
 				} else {
@@ -304,7 +305,7 @@ public class TaskData {
 				 * Finally we generate the new trial, specifying its position, its congruence or incongruence, 
 				 * and whether or not it will be counted in the experimental results.
 				 */
-				Trial next = new Trial(quadrant, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0), type);
+				Trial next = new Trial(quadrant, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0), switchTrialIndices.contains(i), type);
 				if (previous != null) {
 					previous.next = next;
 				} else {
@@ -352,6 +353,8 @@ public class TaskData {
 		public char number;
 		// The correct response to this trial
 		public KeyCode correctReponse;
+		// The actual response to this trial (CANCEL indicates no response/missed deadline)
+		public KeyCode actualResponse = KeyCode.CANCEL;
 		// Variable indicating whether or not this trial will be used in result calculations.
 		public boolean counted;
 		/*
@@ -364,8 +367,17 @@ public class TaskData {
 		 */
 		public boolean congruent;
 		
+		/*
+		 * If this variable is set to 'true', this trial will be a task-switching trial.
+		 * This means that, if the previous trial was a number-identification task, this
+		 * trial will be a letter-identification task, and vice-versa.
+		 * If this variable is set to 'false', this trial will not be a task-switching trial:
+		 * it will be the same kind of task as its predecessor.
+		 */
+		public boolean switching;
+		
 		// The time-to-input of this trial (-1 indicates no input/missed deadline)
-		public long time;
+		public long time = -1;
 		
 		// The potential results of a trial.
 		public enum Result {
@@ -395,11 +407,13 @@ public class TaskData {
 		 * @param isCounted : True for a trial to be included in results calculation, false for a trial to be excluded.
 		 * @param next: The task which comes after this trial.
 		 */
-		public Trial(int quadrant, boolean isCongruent, boolean isCounted, BlockType blockType) {
+		public Trial(int quadrant, boolean isCongruent, boolean isCounted, boolean isSwitching, BlockType blockType) {
 			// Assign the trial's congruence or incongruence as specified.
 			congruent = isCongruent;
 			// Assign the trial's counted/not counted status as specified
 			counted = isCounted;
+			// Assign the trial's switching/non-switching status as specified
+			switching = isSwitching;
 			// Assign the trial's block type as specified
 			type = blockType;
 			// Randomly decide if the trial will contain a vowel or consonant.
@@ -469,8 +483,8 @@ public class TaskData {
 		}
 	}
 	
-	public static class Pause extends SubTask {
-		public Pause(SubTask nextTask) {
+	public static class Break extends SubTask {
+		public Break(SubTask nextTask) {
 			super(nextTask);
 		}
 	}

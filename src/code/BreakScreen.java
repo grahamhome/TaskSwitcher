@@ -25,22 +25,21 @@ import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 
 /**
- * This class creates a screen which appears between trial blocks 
- * to display a message to the subject.
+ * This class creates a screen which appears during the break between trials.
  * @author Graham Home <gmh5970@g.rit.edu>
  */
-public class PauseScreen extends HBox {
+public class BreakScreen extends HBox {
 	
-	private Text pauseTimer = new Text(TaskData.BREAK/60000 + ":" + (TaskData.BREAK%60000 < 10 ? "0" + TaskData.BREAK%60000 : TaskData.BREAK%60000));
+	private Text pauseTimer = new Text();
 	Stage stage;
 	
-	public PauseScreen(Stage stage) {
+	public BreakScreen(Stage stage) {
 		this.stage = stage;
 		setBackground(new Background(new BackgroundFill(Color.BLACK, null, null)));
 		setAlignment(Pos.CENTER);
 		pauseTimer.setFont(Font.font("System", FontWeight.NORMAL, 60));
 		pauseTimer.setFill(ExperimentScreen.FOREGROUND);
-		Text pauseMessage = new Text(Strings.PAUSE_MESSAGE);
+		Text pauseMessage = new Text(Strings.BREAK_MESSAGE);
 		pauseMessage.setFont(Font.font("System", FontWeight.NORMAL, 30));
 		pauseMessage.setFill(ExperimentScreen.FOREGROUND);
 		pauseMessage.setBoundsType(TextBoundsType.VISUAL);
@@ -61,11 +60,29 @@ public class PauseScreen extends HBox {
 		new Timer().start();
 	}
 	
+	private void displayTime(long timeInSeconds) {
+		long minutes = timeInSeconds/60;
+		long seconds = timeInSeconds%60;
+		StringBuilder time = new StringBuilder();
+		if (minutes < 10) { time.append("0"); }
+		time.append(minutes);
+		time.append(":");
+		if (seconds < 10) { time.append("0"); }
+		time.append(seconds);
+		pauseTimer.setText(time.toString());
+	}
+	
 	private class Timer extends AnimationTimer {
 		// Remaining time in seconds
 		private long remainingTime = TaskData.BREAK/1000;
 		// The last time the on-screen timer was updated
-		private long lastUpdateTime = 0; // TODO: This must be initialized to "now" the first time handle() is called
+		private long lastUpdateTime = 0;
+		
+		@Override
+		public void start() {
+			super.start();
+			displayTime(TaskData.BREAK/1000);
+		}
 
 		@Override
 		public void handle(long now) {
@@ -74,10 +91,11 @@ public class PauseScreen extends HBox {
 				ActivityController.start(Activity.EXPERIMENT, stage); 
 			} else if (lastUpdateTime == 0) {
 				lastUpdateTime = now;
-			} else if ((now-lastUpdateTime)/1000000000 >= 1) {
+			}
+			if ((now-lastUpdateTime)/1000000000 >= 1) {
 				lastUpdateTime = now;
 				remainingTime--;
-				pauseTimer.setText(remainingTime/60 + ":" + (remainingTime%60 < 10 ? "0" + remainingTime%60 : remainingTime%60));
+				displayTime(remainingTime);
 			}
 		}
 	}
