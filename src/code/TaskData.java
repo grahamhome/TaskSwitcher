@@ -33,7 +33,7 @@ public class TaskData {
 	
 	// Length of time for which number/letter pairs will remain visible if no input is detected
 	public static final int NO_INPUT_DURATION = 5000;
-	// Length of time after number/letter pairs appear before input is no longer accepted
+	// Length of time after number/letter pairs appear before input is no longer considered valid.
 	public static final int INPUT_DEADLINE = 2000;
 	// Length of time between number/letter pair appearances after a correct input is detected
 	public static final int CORRECT_INPUT_PAUSE = 150;
@@ -450,16 +450,16 @@ public class TaskData {
 			if (!result.equals(Result.NOT_SET)) {
 				return result;
 			}
-			counted = (lastResult != Result.INCORRECT);
+			if (counted) { counted = (lastResult != Result.INCORRECT); }
 			// This is true if the trial received no input.
 			if (input.equals(KeyCode.CANCEL)) {
 				return (lastResult = (result = Result.NO_INPUT));
 			}
 			// This is true if the trial received input after the input deadline.
 			if (elapsedTime > INPUT_DEADLINE) {
-				return (lastResult = (result = Result.MISSED_DEADLINE));
+				counted = false;
 			}
-			// This is true if the trial received input before the input deadline.
+			// This is true if the trial received input before or after the input deadline.
 			time = elapsedTime;
 			actualResponse = input;
 			return (lastResult = (result = (input.equals(correctReponse) ? Result.CORRECT : Result.INCORRECT)));
