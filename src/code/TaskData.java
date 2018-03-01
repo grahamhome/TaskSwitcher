@@ -261,7 +261,7 @@ public class TaskData {
 			 * their congruence or incongruence, and whether or not they will be counted in the experimental results.
 			 */
 			for (int i=0; i<type.numTrials; i++) {
-				Trial next = new Trial((quadrant++)%4, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0), ((i>0 && quadrant==0) || quadrant==2),  type);
+				Trial next = new Trial((quadrant++)%4, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0), (i>0 && (quadrant==0 || quadrant==2)),  type);
 				if (previous != null) {
 					previous.next = next;
 				} else {
