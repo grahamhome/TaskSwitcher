@@ -22,28 +22,6 @@ public class TaskData {
 	 */
 	
 	/*
-	 * Number of Trials:
-	 * How many number/letter pairs to generate for each block of the experiment.
-	 * Feel free to set these to any whole numbers that you want.
-	 * 
-	 * But beware! Each number in this section MUST be even.
-	 * This is necessary to ensure there are an exactly equal number of
-	 * congruent and incongruent trials in each block.
-	 * Additionally, the number of trials in each predictable block 
-	 * must be evenly divisible by 4.
-	 * You've been warned!
-	 */
-	
-	// Number of pairs in the predictable practice block
-	public static int PRACTICE_PREDICTABLE_TRIALS = 4;//40;
-	// Number of pairs in the predictable experimental block
-	public static int EXPERIMENTAL_PREDICTABLE_TRIALS = 4;//152;
-	// Number of pairs in the random practice block
-	public static int PRACTICE_RANDOM_TRIALS = 4;//40;
-	// Number of pairs in the random experimental block
-	public static int EXPERIMENTAL_RANDOM_TRIALS = 4;//152;
-	
-	/*
 	 * Percentages:
 	 * Percentages may be decimal values if you want.
 	 */
@@ -63,8 +41,6 @@ public class TaskData {
 	public static final int INCORRECT_INPUT_PAUSE = 1500;
 	// Length of time between number/letter pair appearances if no input is detected
 	public static final int NO_INPUT_PAUSE = 1500;
-	// Length of time to pause between the predictable and random tests
-	public static final int BREAK = 10000;//120000;
 	
 	/*
 	 * Data Options:
@@ -185,10 +161,10 @@ public class TaskData {
 	 *  Everything is fine.
 	 */
 	public enum BlockType {
-		PRACTICE_PREDICTABLE(PRACTICE_PREDICTABLE_TRIALS),
-		EXPERIMENTAL_PREDICTABLE(EXPERIMENTAL_PREDICTABLE_TRIALS),
-		PRACTICE_RANDOM(PRACTICE_RANDOM_TRIALS),
-		EXPERIMENTAL_RANDOM(EXPERIMENTAL_PREDICTABLE_TRIALS),
+		PRACTICE_PREDICTABLE(Config.practiceTrialCount),
+		EXPERIMENTAL_PREDICTABLE(Config.experimentalTrialCount),
+		PRACTICE_RANDOM(Config.practiceTrialCount),
+		EXPERIMENTAL_RANDOM(Config.experimentalTrialCount),
 		;
 		public int numTrials;
 		private BlockType(int n) {

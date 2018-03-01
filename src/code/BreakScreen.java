@@ -69,14 +69,14 @@ public class BreakScreen extends HBox {
 	
 	private class Timer extends AnimationTimer {
 		// Remaining time in seconds
-		private long remainingTime = TaskData.BREAK/1000;
+		private long remainingTime = Config.breakDuration/1000;
 		// The last time the on-screen timer was updated
 		private long lastUpdateTime = 0;
 		
 		@Override
 		public void start() {
 			super.start();
-			displayTime(TaskData.BREAK/1000);
+			displayTime(Config.breakDuration/1000);
 		}
 
 		@Override

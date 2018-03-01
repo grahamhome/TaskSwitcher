@@ -31,6 +31,7 @@ public class StartScreen extends HBox {
 	public static String subjectNumber;
 	
 	private StartScreen() {
+		Config.load();
 		setBackground(new Background(new BackgroundFill(Color.BLACK, null, null)));
 		setAlignment(Pos.CENTER);
 		Label title = new Label("Configuration");
@@ -61,23 +62,61 @@ public class StartScreen extends HBox {
 		type2.setUserData(2);
 		type2.setToggleGroup(experimentType);
 		HBox typeBox = new HBox(10, typeLabel, type1, type2);
+		Label practiceTrialCountLabel = new Label("Practice trials\n(multiple of 4):");
+		practiceTrialCountLabel.setMinWidth(Region.USE_PREF_SIZE);
+		practiceTrialCountLabel.setAlignment(Pos.CENTER_LEFT);
+		TextField practiceTrialCountField = new TextField();
+		practiceTrialCountField.setMinWidth(50);
+		practiceTrialCountField.setMaxWidth(50);
+		practiceTrialCountField.setText(String.valueOf(Config.practiceTrialCount));
+		HBox practiceTrialCountBox = new HBox(10, practiceTrialCountLabel, practiceTrialCountField);
+		practiceTrialCountBox.setMaxHeight(Region.USE_PREF_SIZE);
+		practiceTrialCountBox.setAlignment(Pos.CENTER_LEFT);
+		Label experimentTrialCountLabel = new Label("Experiment trials\n(multiple of 2):");
+		experimentTrialCountLabel.setMinWidth(Region.USE_PREF_SIZE);
+		experimentTrialCountLabel.setAlignment(Pos.CENTER_LEFT);
+		TextField experimentTrialCountField = new TextField();
+		experimentTrialCountField.setMinWidth(50);
+		experimentTrialCountField.setMaxWidth(50);
+		experimentTrialCountField.setText(String.valueOf(Config.experimentalTrialCount));
+		HBox experimentTrialCountBox = new HBox(10, experimentTrialCountLabel, experimentTrialCountField);
+		experimentTrialCountBox.setMaxHeight(Region.USE_PREF_SIZE);
+		experimentTrialCountBox.setAlignment(Pos.CENTER_LEFT);
+		Label breakLabel = new Label("Pause duration\n(mins) (sec):");
+		breakLabel.setMinWidth(Region.USE_PREF_SIZE);
+		breakLabel.setAlignment(Pos.CENTER_LEFT);
+		TextField breakMinutesField = new TextField();
+		breakMinutesField.setMinWidth(40);
+		breakMinutesField.setMaxWidth(40);
+		breakMinutesField.setText(String.valueOf(Config.breakDuration/60000));
+		TextField breakSecondsField = new TextField();
+		breakSecondsField.setMinWidth(40);
+		breakSecondsField.setMaxWidth(40);
+		breakSecondsField.setText(String.valueOf((Config.breakDuration%60000)/1000));
+		HBox breakDurationBox = new HBox(10, breakLabel, breakMinutesField, breakSecondsField);
+		breakDurationBox.setMaxHeight(Region.USE_PREF_SIZE);
+		breakDurationBox.setAlignment(Pos.CENTER_LEFT);
 		Button enterButton = new Button("Begin Experiment");
 		enterButton.setMinWidth(Region.USE_PREF_SIZE);
 		HBox buttonBox = new HBox(enterButton);
 		buttonBox.setMaxHeight(Region.USE_PREF_SIZE);
 		buttonBox.setAlignment(Pos.CENTER);
-		VBox layoutBox = new VBox(20, titleBox, numberBox, typeBox, buttonBox);
+		VBox layoutBox = new VBox(20, titleBox, numberBox, typeBox, practiceTrialCountBox, experimentTrialCountBox, breakDurationBox, buttonBox);
 		layoutBox.setPadding(new Insets(0,10,10,10));
 		layoutBox.setAlignment(Pos.CENTER);
-		layoutBox.setMaxHeight(200);
-		layoutBox.setMinHeight(200);
+		layoutBox.setMaxHeight(400);
+		layoutBox.setMinHeight(400);
 		layoutBox.setMaxWidth(250);
 		layoutBox.setMinWidth(250);
 		layoutBox.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
-		layoutBox.relocate((stage.getWidth()-250)/2, (stage.getHeight()-200)/2);
-		enterButton.setOnMouseReleased((e) -> {
+		layoutBox.relocate((stage.getWidth()-250)/2, (stage.getHeight()-400)/2);
+		enterButton.setOnMouseClicked((e) -> {
 			subjectNumber = numberField.getText();
 			selectedType = Integer.parseInt(experimentType.getSelectedToggle().getUserData().toString());
+			Config.practiceTrialCount = Integer.parseInt(practiceTrialCountField.getText());
+			Config.experimentalTrialCount = Integer.parseInt(experimentTrialCountField.getText());
+			Config.breakDuration = (Integer.parseInt(breakMinutesField.getText())*60000) + (Integer.parseInt(breakSecondsField.getText())*1000);
+			Config.save();
 			// We won't be needing this anymore...
 			stage.getScene().setCursor(Cursor.NONE);
 			ActivityController.start(Activity.EXPERIMENT, stage);

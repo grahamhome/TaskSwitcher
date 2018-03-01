@@ -106,11 +106,9 @@ public class ExperimentScreen extends VBox {
 			boolean wasListening;
 			synchronized (listening) {
 				if ((wasListening = listening.getAndSet(false)) && (e.getCode().equals(TaskData.LEFT_KEY) || e.getCode().equals(TaskData.RIGHT_KEY))) {
-					System.out.println("Keypress for trial " + currentTrialIndex + " was valid"); // TODO: remove
 					try {
 						switch (getCurrentVisualTrial().trial.end(e.getCode(), currentTime-getCurrentVisualTrial().startTime)) {
 							case CORRECT:
-								System.out.println("Keypress was correct"); // TODO: remove
 								gridGroup.getChildren().remove(getCurrentVisualTrial().trialView);
 								ScheduledExecutorService service1 = Executors.newSingleThreadScheduledExecutor();
 								service1.schedule(new Runnable() {
@@ -121,9 +119,7 @@ public class ExperimentScreen extends VBox {
 								}, TaskData.CORRECT_INPUT_PAUSE, TimeUnit.MILLISECONDS);
 								break;
 							case INCORRECT:
-								System.out.println("Keypress was incorrect"); // TODO: remove
 								if (getCurrentVisualTrial().trial.isPractice()) {
-									System.out.println("practice trial failed"); // TODO: remove
 									// TODO: play sound here
 								} 
 								gridGroup.getChildren().remove(getCurrentVisualTrial().trialView);
@@ -143,7 +139,6 @@ public class ExperimentScreen extends VBox {
 					}
 				} else {
 					if (wasListening) { listening.set(true); }
-					System.out.println("Keypress for trial " + currentTrialIndex + " was invalid"); // TODO: remove
 				}
 			}
 		});
@@ -246,27 +241,20 @@ public class ExperimentScreen extends VBox {
 	}
 	
 	private static void runNextTask() {
-		System.out.println("Starting a task"); // TODO: remove
 		SubTask task = TaskData.next();
-		System.out.println(task);
 		if (task instanceof Trial) {
-			System.out.println("Sending new trial to render function"); // TODO: remove
 			renderTrial((Trial)task);
 		} else if (task instanceof Message) {
-			System.out.println("Showing message"); // TODO: remove
 			pauseExperiment();
 			ActivityController.message = ((Message)task).message;
 			ActivityController.start(Activity.MESSAGE, stage);
 		} else if (task instanceof Instructions) {
-			System.out.println("Showing instructions"); // TODO: remove
 			// TODO: show instructions screen here
 			runNextTask();
 		} else if (task instanceof Break) {
-			System.out.println("Pausing"); // TODO: remove
 			pauseExperiment();
 			ActivityController.start(Activity.PAUSE, stage);
 		} else if (task instanceof End) {
-			System.out.println("Experiment is over"); // TODO: remove
 			ResultsReporter.report();
 			System.exit(0);
 		}
@@ -285,7 +273,6 @@ public class ExperimentScreen extends VBox {
 			@Override
 			public void run() {
 				Result result = activeTrial.trial.end(KeyCode.CANCEL, -1);
-				System.out.println(result);
 				if (result.equals(Result.NO_INPUT) || result.equals(Result.MISSED_DEADLINE)) {
 					Platform.runLater(new Runnable() {
 						@Override
