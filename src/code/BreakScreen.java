@@ -51,11 +51,6 @@ public class BreakScreen extends HBox {
 		layoutBox.setMaxWidth(600);
 		layoutBox.setMinWidth(600);
 		layoutBox.relocate((stage.getWidth()-600)/2, (stage.getHeight()-300)/2);
-		stage.getScene().setOnKeyPressed((e) -> {
-			if (e.getCode().equals(KeyCode.ENTER)) {
-				ActivityController.start(Activity.EXPERIMENT, stage);
-			}
-		});
 		getChildren().add(layoutBox);
 		new Timer().start();
 	}

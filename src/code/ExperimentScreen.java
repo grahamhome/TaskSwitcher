@@ -9,20 +9,18 @@ import code.ActivityController.Activity;
 import code.TaskData.End;
 import code.TaskData.Instructions;
 import code.TaskData.Message;
-import code.TaskData.Pause;
+import code.TaskData.Break;
 import code.TaskData.SubTask;
 import code.TaskData.Trial;
 import code.TaskData.Trial.Position;
 import code.TaskData.Trial.Result;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Border;
@@ -250,12 +248,13 @@ public class ExperimentScreen extends VBox {
 			System.out.println("Showing instructions"); // TODO: remove
 			// TODO: show instructions screen here
 			runNextTask();
-		} else if (task instanceof Pause) {
+		} else if (task instanceof Break) {
 			System.out.println("Pausing"); // TODO: remove
 			pauseExperiment();
 			ActivityController.start(Activity.PAUSE, stage);
 		} else if (task instanceof End) {
 			System.out.println("Experiment is over"); // TODO: remove
+			ResultsReporter.report();
 			System.exit(0);
 		}
 	}

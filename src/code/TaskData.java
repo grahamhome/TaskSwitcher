@@ -64,7 +64,7 @@ public class TaskData {
 	// Length of time between number/letter pair appearances if no input is detected
 	public static final int NO_INPUT_PAUSE = 1500;
 	// Length of time to pause between the predictable and random tests
-	public static final int BREAK = 60000;//120000;
+	public static final int BREAK = 10000;//120000;
 	
 	/*
 	 * Data Options:
@@ -261,7 +261,8 @@ public class TaskData {
 			 * their congruence or incongruence, and whether or not they will be counted in the experimental results.
 			 */
 			for (int i=0; i<type.numTrials; i++) {
-				Trial next = new Trial((quadrant++)%4, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0), (i>0 && (quadrant==0 || quadrant==2)),  type);
+				boolean switchTrial = (i>0 && ((quadrant%2) == 0));
+				Trial next = new Trial((quadrant++)%4, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0), switchTrial,  type);
 				if (previous != null) {
 					previous.next = next;
 				} else {

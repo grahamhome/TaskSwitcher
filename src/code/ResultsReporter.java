@@ -33,11 +33,16 @@ public class ResultsReporter {
 					results.append(blockResults.report());
 					blockResults = new BlockResults();
 					currentBlockType = trial.type;
+				} else {
+					blockResults.add(trial);
 				}
-				blockResults.add(trial);
 			}
 			task = task.next;
 		}
+		if (results.length() > 0) {
+			results.append(System.lineSeparator());
+		}
+		results.append(blockResults.report());
 		try {
 			PrintWriter outputWriter = new PrintWriter(StartScreen.subjectNumber + ".csv", "UTF-8");
 				outputWriter.write(results.toString());
