@@ -13,8 +13,8 @@ import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 
 /**
- * This class creates a screen which appears between trial blocks 
- * to display a message to the subject.
+ * This class creates a screen which appears at the beginning
+ * of the experiment to display instructions to the subject.
  * @author Graham Home <gmh5970@g.rit.edu>
  */
 public class MessageScreen extends HBox {

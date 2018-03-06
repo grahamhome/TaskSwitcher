@@ -1,9 +1,19 @@
 package code;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineEvent;
+import javax.sound.sampled.LineListener;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 import code.ActivityController.Activity;
 import code.TaskData.End;
@@ -53,7 +63,7 @@ public class ExperimentScreen extends VBox {
 	private static double gridOffsetX, gridOffsetY, gridSize;;
 	private static final double LINE_WIDTH = 5;
 	public static final Color FOREGROUND = Color.WHITE;
-	private static final double FONT_SIZE = 75;
+	private static final double FONT_SIZE = 100;
 	
 	private static HBox box;
 	
@@ -71,6 +81,8 @@ public class ExperimentScreen extends VBox {
 	
 	private static AtomicBoolean listening = new AtomicBoolean(false);
 	private static TrialController trialController = new TrialController();
+	
+	private static Clip clip;
 	
 	private ExperimentScreen() {
 		setBackground(new Background(new BackgroundFill(Color.BLACK, null, null)));
@@ -95,6 +107,26 @@ public class ExperimentScreen extends VBox {
 		addControlLabels();
 		box.getChildren().add(gridGroup);
 		getChildren().addAll(new Rectangle(stage.getWidth(), gridOffsetY), box);
+		//new MediaPlayer(new Media(ExperimentScreen.class.getResource("/error.wav").toExternalForm())).play();
+		URL url = this.getClass().getClassLoader().getResource("error.wav");
+        
+        // Get a sound clip resource.
+		try {
+			AudioInputStream audioIn = AudioSystem.getAudioInputStream(url);
+			clip = AudioSystem.getClip();
+			// Open audio clip and load samples from the audio input stream.
+	        clip.open(audioIn);
+	        clip.addLineListener(new LineListener() {
+				@Override
+				public void update(LineEvent event) {
+					if (event.getType().equals(LineEvent.Type.STOP)) {
+						clip.setMicrosecondPosition(0);
+					}
+				}
+			});
+		} catch (IOException | LineUnavailableException | UnsupportedAudioFileException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private static void startInputListener() {
@@ -116,9 +148,7 @@ public class ExperimentScreen extends VBox {
 								}, TaskData.CORRECT_INPUT_PAUSE, TimeUnit.MILLISECONDS);
 								break;
 							case INCORRECT:
-								if (getCurrentVisualTrial().trial.isPractice()) {
-									// TODO: play sound here
-								} 
+								if (getCurrentVisualTrial().trial.isPractice()) { clip.start(); }
 								gridGroup.getChildren().remove(getCurrentVisualTrial().trialView);
 								ScheduledExecutorService service2 = Executors.newSingleThreadScheduledExecutor();
 								service2.schedule(new Runnable() {
@@ -246,8 +276,7 @@ public class ExperimentScreen extends VBox {
 			ActivityController.message = ((Message)task).message;
 			ActivityController.start(Activity.MESSAGE, stage);
 		} else if (task instanceof Instructions) {
-			// TODO: show instructions screen here
-			runNextTask();
+			ActivityController.start(Activity.INSTRUCTIONS, stage);
 		} else if (task instanceof Break) {
 			pauseExperiment();
 			ActivityController.start(Activity.PAUSE, stage);

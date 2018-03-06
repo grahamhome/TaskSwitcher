@@ -7,6 +7,7 @@ public class ActivityController {
 	
 	public enum Activity {
 		START,
+		INSTRUCTIONS,
 		EXPERIMENT,
 		MESSAGE,
 		PAUSE,
@@ -23,6 +24,9 @@ public class ActivityController {
 				switch (activity) {
 				case START:
 					stage.getScene().setRoot(StartScreen.getInstance(stage));
+					break;
+				case INSTRUCTIONS:
+					stage.getScene().setRoot(InstructionsScreen.getInstance(stage));
 					break;
 				case EXPERIMENT:
 					stage.getScene().setRoot(ExperimentScreen.getInstance(stage));
