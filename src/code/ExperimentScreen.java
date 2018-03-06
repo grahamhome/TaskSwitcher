@@ -90,7 +90,7 @@ public class ExperimentScreen extends VBox {
 		gridGroup = new Group();
 		gridSize = (stage.getHeight()*0.75);
 		gridOffsetX = (stage.getWidth()-gridSize)/2;
-		gridOffsetY = 50;
+		gridOffsetY = 0;
 		Rectangle grid = new Rectangle(gridOffsetX, gridOffsetY, gridSize, gridSize);
 		grid.setStroke(FOREGROUND);
 		grid.setStrokeWidth(LINE_WIDTH);
@@ -104,8 +104,8 @@ public class ExperimentScreen extends VBox {
 		box = new HBox();
 		box.setAlignment(Pos.CENTER_LEFT);
 		addIndicatorLabels();
-		addControlLabels();
 		box.getChildren().add(gridGroup);
+		addControlLabels();
 		getChildren().addAll(new Rectangle(stage.getWidth(), gridOffsetY), box);
 		//new MediaPlayer(new Media(ExperimentScreen.class.getResource("/error.wav").toExternalForm())).play();
 		URL url = this.getClass().getClassLoader().getResource("error.wav");
@@ -202,13 +202,18 @@ public class ExperimentScreen extends VBox {
 	}
 	
 	private void addControlLabels() {
-		double width = 400;
+		double width = gridOffsetX-60;
+		double height = 160;
 		VBox controlsBox = new VBox(5);
 		controlsBox.setPadding(new Insets(5,10,5,10));
 		controlsBox.setBorder(new Border(new BorderStroke(FOREGROUND, BorderStrokeStyle.SOLID, null, new BorderWidths(LINE_WIDTH/2))));
 		controlsBox.setMinWidth(width);
 		controlsBox.setMaxWidth(width);
-		controlsBox.relocate((stage.getWidth()-width)/2, gridOffsetY+gridSize+30);
+		controlsBox.setMinHeight(height);
+		controlsBox.setMaxHeight(height);
+		Label title = new Label("Response Keys");
+		title.setFont(Font.font("System", FontWeight.BOLD, 30));
+		title.setTextFill(FOREGROUND);
 		String leftKeyLabelText, rightKeyLabelText;
 		if (TaskData.VOWEL_KEY == TaskData.LEFT_KEY) {
 			leftKeyLabelText = " - Vowel or ";
@@ -246,8 +251,8 @@ public class ExperimentScreen extends VBox {
 		rightKeyAction.setFont(Font.font("System", FontWeight.NORMAL, 30));
 		rightKeyAction.setTextFill(FOREGROUND);
 		rightKeyControls.getChildren().addAll(rightKey, rightKeyAction);
-		controlsBox.getChildren().addAll(leftKeyControls, rightKeyControls);
-		gridGroup.getChildren().add(controlsBox);
+		controlsBox.getChildren().addAll(title, leftKeyControls, rightKeyControls);
+		box.getChildren().add(new VBox(new Rectangle(width, (gridSize-height)/2), new HBox(new Rectangle(30, height), controlsBox)));
 	}
 	
 	// Starts an experiment from the beginning or the current location (if previously paused)
