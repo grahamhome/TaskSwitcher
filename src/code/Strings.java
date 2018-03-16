@@ -21,4 +21,6 @@ public class Strings {
 	public static final String EXPERIMENT_ENDED = STYLE + "You have reached the end of the experiment.<br><br>Thank you very much for your participation.<br><br>Please let the researcher know that you are done.<br><br>Press the Enter key to leave the experiment.";
 	
 	public static final String BREAK_MESSAGE = "Please refrain from other activities during this break.";
+	
+	public static final String COUNTDOWN_MESSAGE = "Experiment will resume in:";
 }

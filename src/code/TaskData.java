@@ -35,12 +35,16 @@ public class TaskData {
 	public static final int NO_INPUT_DURATION = 5000;
 	// Length of time after number/letter pairs appear before input is no longer considered valid.
 	public static final int INPUT_DEADLINE = 2000;
+	// Minimum length of time before an input is considered valid
+	public static final int INPUT_MINIMUM = 100;
 	// Length of time between number/letter pair appearances after a correct input is detected
 	public static final int CORRECT_INPUT_PAUSE = 150;
 	// Length of time between number/letter pair appearances after an incorrect input is detected
 	public static final int INCORRECT_INPUT_PAUSE = 1500;
 	// Length of time between number/letter pair appearances if no input is detected
 	public static final int NO_INPUT_PAUSE = 1500;
+	// Length of time between when the participant presses the "Enter" key and when the trials begin
+	public static final int COUNTDOWN_DURATION = 5000;
 	
 	/*
 	 * Data Options:
@@ -127,31 +131,39 @@ public class TaskData {
 		if (randomFirst) {
 			// Generate the random trials followed by the predictable trials.
 			first =  new Instructions(
-				new Message(Strings.PRACTICE_RANDOM_STARTING, 
+				new Message(Strings.PRACTICE_RANDOM_STARTING,
+				new Countdown(
 				generateBlock(BlockType.PRACTICE_RANDOM, 
 				new Message(Strings.PRACTICE_ENDED_EXPERIMENT_STARTING,
+				new Countdown(
 				generateBlock(BlockType.EXPERIMENTAL_RANDOM, 
 				new Break(
 				new Message(Strings.PRACTICE_PREDICTABLE_STARTING,
+				new Countdown(
 				generateBlock(BlockType.PRACTICE_PREDICTABLE,
 				new Message(Strings.PRACTICE_ENDED_EXPERIMENT_STARTING,
+				new Countdown(
 				generateBlock(BlockType.EXPERIMENTAL_PREDICTABLE, 
 				new Message(Strings.EXPERIMENT_ENDED,
-				new End())))))))))));
+				new End())))))))))))))));
 		} else {
 			// Generate the predictable trials followed by the random trials.
 			first = new Instructions(
 				new Message(Strings.PRACTICE_PREDICTABLE_STARTING,
+				new Countdown(
 				generateBlock(BlockType.PRACTICE_PREDICTABLE, 
 				new Message(Strings.PRACTICE_ENDED_EXPERIMENT_STARTING,
+				new Countdown(
 				generateBlock(BlockType.EXPERIMENTAL_PREDICTABLE, 
 				new Break(
 				new Message(Strings.PRACTICE_RANDOM_STARTING,
+				new Countdown(
 				generateBlock(BlockType.PRACTICE_RANDOM,
 				new Message(Strings.PRACTICE_ENDED_EXPERIMENT_STARTING,
+				new Countdown(
 				generateBlock(BlockType.EXPERIMENTAL_RANDOM, 
 				new Message(Strings.EXPERIMENT_ENDED,
-				new End())))))))))));
+				new End())))))))))))))));
 		}
 	}
 	
@@ -455,8 +467,8 @@ public class TaskData {
 			if (input.equals(KeyCode.CANCEL)) {
 				return (lastResult = (result = Result.NO_INPUT));
 			}
-			// This is true if the trial received input after the input deadline.
-			if (elapsedTime > INPUT_DEADLINE) {
+			// This is true if the trial received input after the input deadline or before the input minimum time.
+			if (elapsedTime < INPUT_MINIMUM || elapsedTime > INPUT_DEADLINE) {
 				counted = false;
 			}
 			// This is true if the trial received input before or after the input deadline.
@@ -482,6 +494,12 @@ public class TaskData {
 	
 	public static class Break extends SubTask {
 		public Break(SubTask nextTask) {
+			super(nextTask);
+		}
+	}
+	
+	public static class Countdown extends SubTask {
+		public Countdown(SubTask nextTask) {
 			super(nextTask);
 		}
 	}

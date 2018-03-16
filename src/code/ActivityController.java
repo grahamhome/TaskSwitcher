@@ -11,6 +11,7 @@ public class ActivityController {
 		EXPERIMENT,
 		MESSAGE,
 		PAUSE,
+		COUNTDOWN,
 		;
 	}
 	
@@ -30,13 +31,16 @@ public class ActivityController {
 					break;
 				case EXPERIMENT:
 					stage.getScene().setRoot(ExperimentScreen.getInstance(stage));
-					ExperimentScreen.startExperiment();
+					ExperimentScreen.getInstance(stage).startExperiment();
 					break;
 				case MESSAGE:
 					stage.getScene().setRoot(new MessageScreen(stage, message));
 					break;
 				case PAUSE:
 					stage.getScene().setRoot(new BreakScreen(stage));
+					break;
+				case COUNTDOWN:
+					stage.getScene().setRoot(new CountdownScreen(stage));
 					break;
 				}
 			}

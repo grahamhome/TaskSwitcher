@@ -4,6 +4,8 @@ import java.net.URISyntaxException;
 
 import code.ActivityController.Activity;
 import javafx.geometry.Pos;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -25,10 +27,7 @@ public class InstructionsScreen extends HBox {
 	private InstructionsScreen() throws URISyntaxException {
 		setBackground(new Background(new BackgroundFill(Color.BLACK, null, null)));
 		setAlignment(Pos.CENTER);
-		WebView messageView = new WebView();
-		messageView.getEngine().loadContent(Strings.INSTRUCTIONS + "<img style='width:100%; height:auto' src='" + this.getClass().getClassLoader().getResource("instructions.png").toURI().toString() + "'/>");
-		messageView.setMaxHeight(stage.getHeight()-100);
-		messageView.setMinHeight(stage.getHeight()-100);
+		ImageView messageView = new ImageView(new Image(this.getClass().getClassLoader().getResource("instructions.png").toString()));
 		VBox layoutBox = new VBox(20, messageView);
 		layoutBox.setAlignment(Pos.CENTER);
 		layoutBox.setMaxHeight(stage.getHeight()-100);

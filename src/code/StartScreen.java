@@ -41,7 +41,7 @@ public class StartScreen extends HBox {
 		HBox titleBox = new HBox(title);
 		titleBox.setMaxHeight(Region.USE_PREF_SIZE);
 		titleBox.setAlignment(Pos.CENTER);
-		Label numberLabel = new Label("Subject Number:");
+		Label numberLabel = new Label("Participant Number:");
 		numberLabel.setMinWidth(Region.USE_PREF_SIZE);
 		numberLabel.setAlignment(Pos.CENTER_LEFT);
 		TextField numberField = new TextField();
@@ -62,7 +62,7 @@ public class StartScreen extends HBox {
 		type2.setUserData(2);
 		type2.setToggleGroup(experimentType);
 		HBox typeBox = new HBox(10, typeLabel, type1, type2);
-		Label practiceTrialCountLabel = new Label("Practice trials\n(multiple of 4):");
+		Label practiceTrialCountLabel = new Label("Practice trials\n(multiple of 2):");
 		practiceTrialCountLabel.setMinWidth(Region.USE_PREF_SIZE);
 		practiceTrialCountLabel.setAlignment(Pos.CENTER_LEFT);
 		TextField practiceTrialCountField = new TextField();
@@ -106,10 +106,10 @@ public class StartScreen extends HBox {
 		layoutBox.setAlignment(Pos.CENTER);
 		layoutBox.setMaxHeight(400);
 		layoutBox.setMinHeight(400);
-		layoutBox.setMaxWidth(250);
-		layoutBox.setMinWidth(250);
+		layoutBox.setMaxWidth(270);
+		layoutBox.setMinWidth(270);
 		layoutBox.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
-		layoutBox.relocate((stage.getWidth()-250)/2, (stage.getHeight()-400)/2);
+		layoutBox.relocate((stage.getWidth()-270)/2, (stage.getHeight()-400)/2);
 		enterButton.setOnMouseClicked((e) -> {
 			subjectNumber = numberField.getText();
 			selectedType = Integer.parseInt(experimentType.getSelectedToggle().getUserData().toString());

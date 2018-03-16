@@ -20,6 +20,7 @@ import code.TaskData.End;
 import code.TaskData.Instructions;
 import code.TaskData.Message;
 import code.TaskData.Break;
+import code.TaskData.Countdown;
 import code.TaskData.SubTask;
 import code.TaskData.Trial;
 import code.TaskData.Trial.Position;
@@ -106,6 +107,7 @@ public class ExperimentScreen extends VBox {
 		addIndicatorLabels();
 		box.getChildren().add(gridGroup);
 		addControlLabels();
+		setVisible(false);
 		getChildren().addAll(new Rectangle(stage.getWidth(), gridOffsetY), box);
 		//new MediaPlayer(new Media(ExperimentScreen.class.getResource("/error.wav").toExternalForm())).play();
 		URL url = this.getClass().getClassLoader().getResource("error.wav");
@@ -129,7 +131,7 @@ public class ExperimentScreen extends VBox {
 		}
 	}
 	
-	private static void startInputListener() {
+	private void startInputListener() {
 		stage.getScene().setOnKeyPressed(e -> {
 			long currentTime = System.currentTimeMillis();
 			boolean wasListening;
@@ -148,7 +150,7 @@ public class ExperimentScreen extends VBox {
 								}, TaskData.CORRECT_INPUT_PAUSE, TimeUnit.MILLISECONDS);
 								break;
 							case INCORRECT:
-								if (getCurrentVisualTrial().trial.isPractice()) { clip.start(); }
+								clip.start();
 								gridGroup.getChildren().remove(getCurrentVisualTrial().trialView);
 								ScheduledExecutorService service2 = Executors.newSingleThreadScheduledExecutor();
 								service2.schedule(new Runnable() {
@@ -202,7 +204,7 @@ public class ExperimentScreen extends VBox {
 	}
 	
 	private void addControlLabels() {
-		double width = gridOffsetX-60;
+		double width = gridOffsetX-120;
 		double height = 160;
 		VBox controlsBox = new VBox(5);
 		controlsBox.setPadding(new Insets(5,10,5,10));
@@ -211,6 +213,7 @@ public class ExperimentScreen extends VBox {
 		controlsBox.setMaxWidth(width);
 		controlsBox.setMinHeight(height);
 		controlsBox.setMaxHeight(height);
+		controlsBox.setAlignment(Pos.CENTER);
 		Label title = new Label("Response Keys");
 		title.setFont(Font.font("System", FontWeight.BOLD, 30));
 		title.setTextFill(FOREGROUND);
@@ -231,7 +234,8 @@ public class ExperimentScreen extends VBox {
 		}
 		HBox leftKeyControls = new HBox(5);
 		leftKeyControls.setAlignment(Pos.CENTER_LEFT);
-		leftKeyControls.setMinWidth(width-10);
+		leftKeyControls.setMinWidth(width-20);
+		leftKeyControls.setMaxWidth(width-20);
 		Label leftKey = new Label(TaskData.LEFT_KEY_NAME);
 		leftKey.setFont(Font.font("System", FontWeight.BOLD, 30));
 		leftKey.setTextFill(FOREGROUND);
@@ -242,7 +246,8 @@ public class ExperimentScreen extends VBox {
 		leftKeyControls.getChildren().addAll(leftKey, leftKeyAction);
 		HBox rightKeyControls = new HBox(5);
 		rightKeyControls.setAlignment(Pos.CENTER_LEFT);
-		rightKeyControls.setMinWidth(width-10);
+		rightKeyControls.setMinWidth(width-20);
+		rightKeyControls.setMaxWidth(width-20);
 		Label rightKey = new Label(TaskData.RIGHT_KEY_NAME);
 		rightKey.setFont(Font.font("System", FontWeight.BOLD, 30));
 		rightKey.setTextFill(FOREGROUND);
@@ -252,11 +257,11 @@ public class ExperimentScreen extends VBox {
 		rightKeyAction.setTextFill(FOREGROUND);
 		rightKeyControls.getChildren().addAll(rightKey, rightKeyAction);
 		controlsBox.getChildren().addAll(title, leftKeyControls, rightKeyControls);
-		box.getChildren().add(new VBox(new Rectangle(width, (gridSize-height)/2), new HBox(new Rectangle(30, height), controlsBox)));
+		box.getChildren().add(new VBox(new Rectangle(width, (gridSize-height)/2), new HBox(new Rectangle(60, height), controlsBox)));
 	}
 	
 	// Starts an experiment from the beginning or the current location (if previously paused)
-	public static void startExperiment() {
+	public void startExperiment() {
 		if (!hasStarted) {
 			TaskData.createExperiment((StartScreen.selectedType == 2));
 			hasStarted = true;
@@ -272,7 +277,7 @@ public class ExperimentScreen extends VBox {
 		trialController.stop();
 	}
 	
-	private static void runNextTask() {
+	private void runNextTask() {
 		SubTask task = TaskData.next();
 		if (task instanceof Trial) {
 			renderTrial((Trial)task);
@@ -285,18 +290,22 @@ public class ExperimentScreen extends VBox {
 		} else if (task instanceof Break) {
 			pauseExperiment();
 			ActivityController.start(Activity.PAUSE, stage);
+		} else if (task instanceof Countdown) {
+			pauseExperiment();
+			ActivityController.start(Activity.COUNTDOWN, stage);
 		} else if (task instanceof End) {
 			ResultsReporter.report();
 			System.exit(0);
 		}
 	}
 	
-	public static void renderTrial(Trial trial) {
+	public void renderTrial(Trial trial) {
 		/**
 		 * We need an instance of the trial (and trial view) that will not change if the key listener
 		 * switches out the current trial. That's why this reference is used in the
 		 * service below rather than the thread-safe method calls.
 		 */
+		if(!isVisible()) { setVisible(true); }
 		VisualTrial activeTrial = new VisualTrial(trial);
 		activeTrial.start();
 		ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
@@ -366,7 +375,7 @@ public class ExperimentScreen extends VBox {
 		}
 	}
 
-	public static VBox getInstance(Stage primaryStage) {
+	public static ExperimentScreen getInstance(Stage primaryStage) {
 		stage = primaryStage;
 		return (instance == null ? instance = new ExperimentScreen() : instance);
 	}
