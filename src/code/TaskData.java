@@ -250,7 +250,7 @@ public class TaskData {
 			 */
 			for (int i=0; i<type.numTrials; i++) {
 				boolean switchTrial = (i>0 && ((quadrant%2) == 0));
-				Trial next = new Trial((quadrant++)%4, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0), switchTrial,  type);
+				Trial next = new Trial(i+1, (quadrant++)%4, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0), switchTrial,  type);
 				if (previous != null) {
 					previous.next = next;
 				} else {
@@ -294,7 +294,7 @@ public class TaskData {
 				 * Finally we generate the new trial, specifying its position, its congruence or incongruence, 
 				 * and whether or not it will be counted in the experimental results.
 				 */
-				Trial next = new Trial(quadrant, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0), switchTrialIndices.contains(i), type);
+				Trial next = new Trial(i+1, quadrant, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0), switchTrialIndices.contains(i), type);
 				if (previous != null) {
 					previous.next = next;
 				} else {
@@ -314,6 +314,9 @@ public class TaskData {
 	 * Each trial belongs to a set of trials called a block, and each trial records which block it belongs to.
 	 */
 	public static class Trial extends SubTask {
+		
+		// The index of this particular trial (relative to its block) - used for output only
+		private int index;
 		
 		// The block to which this particular trial belongs.
 		public BlockType type;
@@ -391,19 +394,17 @@ public class TaskData {
 		private static Result lastResult = Result.NOT_SET;
 		/**
 		 * This creates a congruent or incongruent trial with the specified position.
+		 * @param index : The index of this trial relative to its block
 		 * @param quadrant : A number 0-3 where 0 = upper left, 1 = upper right, 2 = lower right, 3 = lower left.
 		 * @param isCongruent : True for a congruent trial, false for an incongruent trial.
 		 * @param isCounted : True for a trial to be included in results calculation, false for a trial to be excluded.
 		 * @param next: The task which comes after this trial.
 		 */
-		public Trial(int quadrant, boolean isCongruent, boolean isCounted, boolean isSwitching, BlockType blockType) {
-			// Assign the trial's congruence or incongruence as specified.
+		public Trial(int trialIndex, int quadrant, boolean isCongruent, boolean isCounted, boolean isSwitching, BlockType blockType) {
+			index = trialIndex;
 			congruent = isCongruent;
-			// Assign the trial's counted/not counted status as specified
 			counted = isCounted;
-			// Assign the trial's switching/non-switching status as specified
 			switching = isSwitching;
-			// Assign the trial's block type as specified
 			type = blockType;
 			// Randomly decide if the trial will contain a vowel or consonant.
 			boolean hasVowel = randomizer.nextBoolean();
@@ -477,18 +478,24 @@ public class TaskData {
 			return (lastResult = (result = (input.equals(correctReponse) ? Result.CORRECT : Result.INCORRECT)));
 		}
 		
-		public boolean isPractice() {
-			return (type.equals(BlockType.PRACTICE_PREDICTABLE) || type.equals(BlockType.PRACTICE_RANDOM));
-		}
-		
 		/**
 		 * This method returns a string representation of a trial for data output purposes.
 		 */
 		@Override
 		public String toString() {
-			StringBuilder trialString = new StringBuilder();
-			return trialString.append(letter).append(number).append(", ").append(position.toString()).append(", ")
-					.append(congruent ? "congruent" : "incongruent").append(counted ? "" : ", not counted").append(System.lineSeparator()).toString();
+			return new StringBuilder()
+					.append(StartScreen.subjectNumber).append(",")
+					.append(type.equals(BlockType.PRACTICE_PREDICTABLE) || type.equals(BlockType.EXPERIMENTAL_PREDICTABLE) ? 1 : 2).append(",")
+					.append(type.equals(BlockType.PRACTICE_PREDICTABLE) || type.equals(BlockType.PRACTICE_RANDOM) ? 1 : 2).append(",")
+					.append(index).append(",")
+					.append(result == null ? "" : result.equals(Result.CORRECT) ? 1 : result.equals(Result.INCORRECT) ? 2 : "").append(",")
+					.append(time != -1 ? time : NO_INPUT_DURATION).append(",")
+					.append(letter).append(number).append(",")
+					.append(position.value+1).append(",")
+					.append(!switching ? 1 : 2).append(",")
+					.append(congruent ? 1 : 2).append(",")
+					.append(actualResponse.equals(KeyCode.CANCEL) ? "None" : actualResponse.equals(TaskData.LEFT_KEY) ? TaskData.LEFT_KEY_NAME : TaskData.RIGHT_KEY_NAME).append(",")
+					.append(counted ? 1 : 2).append(System.lineSeparator()).toString();
 		}
 	}
 	

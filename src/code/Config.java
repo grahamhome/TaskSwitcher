@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
+import javafx.stage.Stage;
+
 public class Config {
 	
 	public static int practiceTrialCount = 40;
@@ -29,7 +31,7 @@ public class Config {
 	
 	public static void save() {
 		try {
-			PrintWriter outputWriter = new PrintWriter(new File(TaskSwitcher.class.getResource("/config.csv").getPath()));
+			PrintWriter outputWriter = new PrintWriter(new File(Config.class.getResource("/config.csv").toString()));
 				outputWriter.write(practiceTrialCount + "," + experimentalTrialCount + "," + breakDuration);
 			outputWriter.close();
 		} catch (Exception e) {

@@ -32,9 +32,11 @@ public class InstructionsScreen extends HBox {
 		layoutBox.setAlignment(Pos.CENTER);
 		layoutBox.setMaxHeight(stage.getHeight()-100);
 		layoutBox.setMinHeight(stage.getHeight()-100);
-		layoutBox.setMaxWidth((stage.getHeight()-100)*0.77);
-		layoutBox.setMinWidth((stage.getHeight()-100)*0.77);
-		layoutBox.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
+		layoutBox.setMaxWidth(stage.getWidth()-100);
+		layoutBox.setMinWidth(stage.getWidth()-100);
+		messageView.setPreserveRatio(true);
+		messageView.setFitWidth(stage.getWidth()-100);
+		messageView.setFitHeight(stage.getHeight()-100);
 		layoutBox.relocate((stage.getWidth()-((stage.getHeight()-100)*0.77))/2, 50);
 		stage.getScene().setOnKeyPressed((e) -> {
 			if (e.getCode().equals(KeyCode.ENTER)) {
