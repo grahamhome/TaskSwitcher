@@ -36,7 +36,7 @@ public class TaskData {
 	// Length of time after number/letter pairs appear before input is no longer considered valid.
 	public static final int INPUT_DEADLINE = 2000;
 	// Minimum length of time before an input is considered valid
-	public static final int INPUT_MINIMUM = 100;
+	public static final int INPUT_MINIMUM = 150;
 	// Length of time between number/letter pair appearances after a correct input is detected
 	public static final int CORRECT_INPUT_PAUSE = 150;
 	// Length of time between number/letter pair appearances after an incorrect input is detected
@@ -250,7 +250,7 @@ public class TaskData {
 			 */
 			for (int i=0; i<type.numTrials; i++) {
 				boolean switchTrial = (i>0 && ((quadrant%2) == 0));
-				Trial next = new Trial(i+1, (quadrant++)%4, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0), switchTrial,  type);
+				Trial next = new Trial(i+1, (quadrant++)%4, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), switchTrial,  type);
 				if (previous != null) {
 					previous.next = next;
 				} else {
@@ -294,7 +294,7 @@ public class TaskData {
 				 * Finally we generate the new trial, specifying its position, its congruence or incongruence, 
 				 * and whether or not it will be counted in the experimental results.
 				 */
-				Trial next = new Trial(i+1, quadrant, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), (i>0), switchTrialIndices.contains(i), type);
+				Trial next = new Trial(i+1, quadrant, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), switchTrialIndices.contains(i), type);
 				if (previous != null) {
 					previous.next = next;
 				} else {
@@ -315,8 +315,12 @@ public class TaskData {
 	 */
 	public static class Trial extends SubTask {
 		
+		/**
+		 * Trial Data Variables
+		 */
+		
 		// The index of this particular trial (relative to its block) - used for output only
-		private int index;
+		public int index;
 		
 		// The block to which this particular trial belongs.
 		public BlockType type;
@@ -345,10 +349,7 @@ public class TaskData {
 		public char number;
 		// The correct response to this trial
 		public KeyCode correctReponse;
-		// The actual response to this trial (CANCEL indicates no response/missed deadline)
-		public KeyCode actualResponse = KeyCode.CANCEL;
-		// Variable indicating whether or not this trial will be used in result calculations.
-		public boolean counted;
+		
 		/*
 		 * If this variable is set to 'true', the trial will be congruent.
 		 * This means that its letter and number will both correspond to the
@@ -368,8 +369,12 @@ public class TaskData {
 		 */
 		public boolean switching;
 		
-		// The time-to-input of this trial (-1 indicates no input/missed deadline)
-		public long time = -1;
+		/**
+		 * Trial Response Variables
+		 */
+		
+		// The time-to-input of this trial
+		public long time = 0;
 		
 		// The potential results of a trial.
 		public enum Result {
@@ -384,6 +389,26 @@ public class TaskData {
 		// The result of this trial.
 		public Result result = Result.NOT_SET;
 		
+		// The actual response to this trial (CANCEL indicates no response/missed deadline)
+		public KeyCode actualResponse = KeyCode.CANCEL;
+		// Whether or not the trial received a response in the "valid response time" window
+		private boolean validResponseTime = false;
+		// Variable indicating whether or not this trial has completed. Defaults to false so that if
+		// the experiment is terminated early, uncompleted trials will not be counted.
+		private boolean seen = false;
+		
+		// Whether or not this trial follows a failed trial
+		private boolean followsFailure = false;
+		
+		// Whether or not this trial should be used for error and response time statistics
+		public boolean useInError = false;
+		public boolean useInResponse = false;
+		
+		
+		/**
+		 * Trial Generation Utility Variables
+		 */
+		
 		// The letter which was generated most recently (so it won't be used in the next trial to be generated)
 		// Starts as '@', which is why that may not be included in the list of letters at the top of this file.
 		private static char lastLetter = '@';
@@ -392,18 +417,19 @@ public class TaskData {
 		private static char lastNumber = '@';
 		// The trial result which was saved most recently (so that trials after error trials can be ignored in the statistics)
 		private static Result lastResult = Result.NOT_SET;
+		
 		/**
 		 * This creates a congruent or incongruent trial with the specified position.
 		 * @param index : The index of this trial relative to its block
 		 * @param quadrant : A number 0-3 where 0 = upper left, 1 = upper right, 2 = lower right, 3 = lower left.
 		 * @param isCongruent : True for a congruent trial, false for an incongruent trial.
-		 * @param isCounted : True for a trial to be included in results calculation, false for a trial to be excluded.
+		 * @param isFirst : Indicates whether or not the trial is the first in a block
+		 * @param isSwitching : Indicates whether the trial is switching or non-switching
 		 * @param next: The task which comes after this trial.
 		 */
-		public Trial(int trialIndex, int quadrant, boolean isCongruent, boolean isCounted, boolean isSwitching, BlockType blockType) {
+		public Trial(int trialIndex, int quadrant, boolean isCongruent, boolean isSwitching, BlockType blockType) {
 			index = trialIndex;
 			congruent = isCongruent;
-			counted = isCounted;
 			switching = isSwitching;
 			type = blockType;
 			// Randomly decide if the trial will contain a vowel or consonant.
@@ -463,19 +489,27 @@ public class TaskData {
 			if (!result.equals(Result.NOT_SET)) {
 				return result;
 			}
-			if (counted) { counted = (lastResult != Result.INCORRECT); }
+			// Mark the trial as seen
+			seen = true;
+			// Indicate whether or not the trial is the successor to a failed trial
+			followsFailure = lastResult.equals(Result.INCORRECT);		
 			// This is true if the trial received no input.
 			if (input.equals(KeyCode.CANCEL)) {
+				validResponseTime = false;
+				time = NO_INPUT_DURATION;
 				return (lastResult = (result = Result.NO_INPUT));
 			}
-			// This is true if the trial received input after the input deadline or before the input minimum time.
-			if (elapsedTime < INPUT_MINIMUM || elapsedTime > INPUT_DEADLINE) {
-				counted = false;
-			}
 			// This is true if the trial received input before or after the input deadline.
+			// Indicate the trial's result
+			result = (input.equals(correctReponse) ? Result.CORRECT : Result.INCORRECT);
+			// Indicate whether or not the trial's response was received in the "valid response time" window
+			validResponseTime = (elapsedTime > INPUT_MINIMUM && elapsedTime < INPUT_DEADLINE);
+			// Indicate whether or not this trial should be used in error and response time calculations
+			useInError = seen && index>1 && validResponseTime;
+			useInResponse = seen && index>1 && validResponseTime && !result.equals(Result.INCORRECT) && !followsFailure;
 			time = elapsedTime;
 			actualResponse = input;
-			return (lastResult = (result = (input.equals(correctReponse) ? Result.CORRECT : Result.INCORRECT)));
+			return (lastResult = (result));
 		}
 		
 		/**
@@ -488,14 +522,15 @@ public class TaskData {
 					.append(type.equals(BlockType.PRACTICE_PREDICTABLE) || type.equals(BlockType.EXPERIMENTAL_PREDICTABLE) ? 1 : 2).append(",")
 					.append(type.equals(BlockType.PRACTICE_PREDICTABLE) || type.equals(BlockType.PRACTICE_RANDOM) ? 1 : 2).append(",")
 					.append(index).append(",")
-					.append(result == null ? "" : result.equals(Result.CORRECT) ? 1 : result.equals(Result.INCORRECT) ? 2 : "").append(",")
-					.append(time != -1 ? time : NO_INPUT_DURATION).append(",")
+					.append(result.equals(Result.CORRECT) ? 1 : 2).append(",")
+					.append(time).append(",")
 					.append(letter).append(number).append(",")
 					.append(position.value+1).append(",")
 					.append(!switching ? 1 : 2).append(",")
 					.append(congruent ? 1 : 2).append(",")
 					.append(actualResponse.equals(KeyCode.CANCEL) ? "None" : actualResponse.equals(TaskData.LEFT_KEY) ? TaskData.LEFT_KEY_NAME : TaskData.RIGHT_KEY_NAME).append(",")
-					.append(counted ? 1 : 2).append(System.lineSeparator()).toString();
+					.append(useInError ? 1 : 2).append(",")
+					.append(useInResponse ? 1 : 2).append(System.lineSeparator()).toString();
 		}
 	}
 	

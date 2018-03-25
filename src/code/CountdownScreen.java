@@ -23,6 +23,9 @@ public class CountdownScreen extends HBox {
 	
 	private Text pauseTimer = new Text();
 	Stage stage;
+	// This variable determines if this screen has been displayed yet, as the initial message it displays
+	// is different from subsequent messages.
+	private static boolean seen = false;
 	
 	public CountdownScreen(Stage stage) {
 		this.stage = stage;
@@ -30,7 +33,13 @@ public class CountdownScreen extends HBox {
 		setAlignment(Pos.CENTER);
 		pauseTimer.setFont(Font.font("System", FontWeight.NORMAL, 60));
 		pauseTimer.setFill(ExperimentScreen.FOREGROUND);
-		Text pauseMessage = new Text(Strings.COUNTDOWN_MESSAGE);
+		Text pauseMessage;
+		if (!seen) {
+			pauseMessage = new Text(Strings.COUNTDOWN_MESSAGE.replace("resume", "begin"));
+			seen = true;
+		} else {
+			pauseMessage = new Text(Strings.COUNTDOWN_MESSAGE);
+		}
 		pauseMessage.setFont(Font.font("System", FontWeight.NORMAL, 30));
 		pauseMessage.setFill(ExperimentScreen.FOREGROUND);
 		pauseMessage.setBoundsType(TextBoundsType.VISUAL);

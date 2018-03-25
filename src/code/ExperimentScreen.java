@@ -118,6 +118,7 @@ public class ExperimentScreen extends VBox {
 			clip = AudioSystem.getClip();
 			// Open audio clip and load samples from the audio input stream.
 	        clip.open(audioIn);
+	        // Set clip to auto-rewind after each playback
 	        clip.addLineListener(new LineListener() {
 				@Override
 				public void update(LineEvent event) {
@@ -317,10 +318,17 @@ public class ExperimentScreen extends VBox {
 					Platform.runLater(new Runnable() {
 						@Override
 						public void run() {
+							clip.start();
 							gridGroup.getChildren().remove(activeTrial.trialView);
+							ScheduledExecutorService service2 = Executors.newSingleThreadScheduledExecutor();
+							service2.schedule(new Runnable() {
+								@Override
+								public void run() {
+									runNextTask();
+								}
+							}, TaskData.INCORRECT_INPUT_PAUSE, TimeUnit.MILLISECONDS);
 						}
 					});
-					runNextTask();
 				}
 			}
 		}, TaskData.NO_INPUT_DURATION, TimeUnit.MILLISECONDS);
