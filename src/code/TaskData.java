@@ -206,51 +206,55 @@ public class TaskData {
 		Trial previous = null;
 		// This variable keeps track of which quadrant of the grid the current task is in
 		int quadrant = 0;
-		/** We need to make sure that exactly half of the trials in each block are "incongruent".
-		 * That is, the key that would be pressed for the letter option is different from the key that 
-		 * would be pressed for the number option. The other half of the trials must be congruent. 
-		 * In other words, the same key could be pressed for both the letter and the number option. 
-		 * Congruent and incongruent trials must be randomly distributed throughout the trial sequence.
-		 * 
-		 * Additionally, we need to ensure that half of the trials in each block are "task-switching" trials.
+		/** We need to make sure that exactly half of the trials in each block are "task-switching" trials.
 		 * That is, if the previous trial was a number identification task, this trial will be a letter-identification
 		 * task, and vice versa. This will happen automatically in the predictable blocks, but must be enforced in the 
 		 * random blocks. In the random blocks, task-switching and non-task-switching trials must be distributed randomly.
+		 * 
+		 * Additionally, we need to ensure that half of the switch trials and half of the non-switch trials in each block 
+		 * are "incongruent". That is, the key that would be pressed for the letter option is different from the key that 
+		 * would be pressed for the number option. The other half of the switch trials and the other half of the non-switch 
+		 * trials must be congruent. In other words, the same key could be pressed for both the letter and the number option. 
+		 * Congruent and incongruent trials must be randomly distributed throughout the trial sequence. This must be enforced
+		 * in both the random and predictable blocks.
+		 * 
 		 */
-		 /**
-		  * To start, we generate two lists of the indexes of all the trials which will be in the list, 
-		  * excluding the first trial which will not be counted in the results.
-		  */
-		List<Integer> congruentTrialIndices = new ArrayList<Integer>(type.numTrials);
-		List<Integer> switchTrialIndices = new ArrayList<Integer>(type.numTrials);
-		for (int i=1; i<type.numTrials; i++) {
-			congruentTrialIndices.add(i);
-			switchTrialIndices.add(i);
-		}
-		// Next, we randomly shuffle the lists of indexes.
-		Collections.shuffle(congruentTrialIndices);
-		Collections.shuffle(switchTrialIndices);
-		/*
-		 * Then we take a subset of the shuffled indexes that is one half of the size of the total
-		 * number of indexes from each list of indexes. The random indexes in these new lists will be 
-		 * the locations of the congruent and switch trials in the trial sequence to be generated. All 
-		 * indexes not in these lists will be the locations of the incongruent and non-switch trials in the trial sequence.
-		 */
-		congruentTrialIndices = congruentTrialIndices.subList(0, type.numTrials/2);
-		switchTrialIndices = switchTrialIndices.subList(0, type.numTrials/2);
-		
-		/*
-		 * Now we're ready to generate the trials for this block.
-		 * First we check to see if we are generating predictably-placed or randomly-placed trials.
-		 */
+		// First we check to see if we are generating predictably-placed or randomly-placed trials.
 		if (type.equals(BlockType.PRACTICE_PREDICTABLE) || type.equals(BlockType.EXPERIMENTAL_PREDICTABLE)) {
+			// Here we generate the specified number of predictably-placed trials.
 			/**
-			 * Here we generate the specified number of predictably-placed trials, specifying their position,
-			 * their congruence or incongruence, and whether or not they will be counted in the experimental results.
+			 * In predictably-placed trials, every other trial will automatically be a switch trial, and the rest will
+			 * be non-switch trials. All we have to do is ensure that half of the switch trials and half of the non-switch 
+			 * trials will be congruent and that the rest will be incongruent. To start, we generate a list of the indices
+			 * of the switch trials and a list of the indices of the non-switch trials, excluding the first trial which is
+			 * not considered to be either switch or non-switch.
+			 */
+			List<Integer> nonSwitchTrialIndices = new ArrayList<Integer>();
+			List<Integer> switchTrialIndices = new ArrayList<Integer>();
+			for (int i = 1; i<type.numTrials; i++) {
+				if (i%2 == 0) {
+					switchTrialIndices.add(i);
+				} else {
+					nonSwitchTrialIndices.add(i);
+				}
+			}
+			// Then we randomly shuffle both of these lists.
+			Collections.shuffle(nonSwitchTrialIndices);
+			Collections.shuffle(switchTrialIndices);
+			/*
+			 * We then create a new list from each of these lists which is a quarter of the length of the total number of trials 
+			 * in the block. These lists designate which switch and non-switch trials will be congruent. The rest will be incongruent.
+			 */
+			List<Integer> congruentSwitchTrialIndices = switchTrialIndices.subList(0, type.numTrials/4);
+			List<Integer> congruentNonSwitchTrialIndices = nonSwitchTrialIndices.subList(0, type.numTrials/4);
+			/*
+			 * Now we can generate all the trials in this block of predictably-placed trials, specifying the 
+			 * index, position, congruence or incongruence, and switching or non-switching nature of each trial
+			 * along with its block type.
 			 */
 			for (int i=0; i<type.numTrials; i++) {
-				boolean switchTrial = (i>0 && ((quadrant%2) == 0));
-				Trial next = new Trial(i+1, (quadrant++)%4, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), switchTrial,  type);
+				boolean isSwitchTrial = (i>0 && ((quadrant%2) == 0));
+				Trial next = new Trial(i+1, (quadrant++)%4, (i==0 ? randomizer.nextBoolean() : ((isSwitchTrial && congruentSwitchTrialIndices.contains(i)) || (!isSwitchTrial && congruentNonSwitchTrialIndices.contains(i)))), isSwitchTrial,  type);
 				if (previous != null) {
 					previous.next = next;
 				} else {
@@ -260,21 +264,46 @@ public class TaskData {
 			}
 		} else {
 			// Here we generate the specified number of randomly-placed trials.
+			/**
+			 * To start, we generate a list of the indices of all the trials which will be in the block, 
+			 * excluding the first trial since it is not considered to be switch or non-switch.
+			 */
+			List<Integer> trialIndices = new ArrayList<Integer>(type.numTrials);
+			for (int i=1; i<type.numTrials; i++) {
+				trialIndices.add(i);
+			}
+			// Next, we randomly shuffle the list of indices.
+			Collections.shuffle(trialIndices);
+			/*
+			 * Then we divide the shuffled indices into two equal parts. The random indices in these new lists will be 
+			 * the locations of the switch trials and non-switch trials in the trial sequence to be generated.
+			 */
+			List<Integer> switchTrialIndices = trialIndices.subList(0, type.numTrials/2);
+			List<Integer> nonSwitchTrialIndices = trialIndices.subList(type.numTrials/2, type.numTrials-1);
+			/*
+			 * We then create a new list from each of these lists which is a quarter of the length of the original list.
+			 * These lists designate which switch and non-switch trials will be congruent. The rest will be incongruent.
+			 */
+			List<Integer> congruentSwitchTrialIndices = switchTrialIndices.subList(0, type.numTrials/4);
+			List<Integer> congruentNonSwitchTrialIndices = nonSwitchTrialIndices.subList(0, type.numTrials/4);
+			// Now we can generate all the trials in this block of randomly-placed trials.
 			for (int i=0; i<type.numTrials; i++) {
+				boolean isSwitchTrial = switchTrialIndices.contains(i);
 				if (i == 0) {
+					// If this is the first trial, there is no previous trial, so we generate a random position for this trial.
 					quadrant = randomizer.nextInt(3);
 				} else {
 					/*
-					 * We need to know the position of the last trial to ensure that this trial will
+					 * Otherwise, we need to know the position of the last trial to ensure that this trial will
 					 * be task-switching or non-task-switching as specified.
 					 */
 					quadrant = previous.position.value;
 					/*
 					 * Here we ensure that this trial is in a different position than the last one.
-					 * We also ensure that only trials at the "switch indices" will make the subject
-					 * switch between letter-identification and number-identification.
+					 * We also ensure that only trials at the "switch indices" will make the participant
+					 * switch between the letter-identification task and the number-identification task.
 					 */
-					if (switchTrialIndices.contains(i)) {
+					if (isSwitchTrial) {
 						// Set the trial's quadrant to create a task-switch trial
 						if (quadrant < 2) {
 							quadrant = (randomizer.nextBoolean() ? 2 : 3);
@@ -291,10 +320,9 @@ public class TaskData {
 					}
 				}
 				/*
-				 * Finally we generate the new trial, specifying its position, its congruence or incongruence, 
-				 * and whether or not it will be counted in the experimental results.
+				 * Finally we generate the new trial, specifying its index, position, its congruence or incongruence, its switching or non-switching designation, and its block type.
 				 */
-				Trial next = new Trial(i+1, quadrant, (i==0 ? randomizer.nextBoolean() : congruentTrialIndices.contains(i)), switchTrialIndices.contains(i), type);
+				Trial next = new Trial(i+1, quadrant, (i==0 ? randomizer.nextBoolean() : ((isSwitchTrial && congruentSwitchTrialIndices.contains(i)) || (!isSwitchTrial && congruentNonSwitchTrialIndices.contains(i)))), isSwitchTrial, type);
 				if (previous != null) {
 					previous.next = next;
 				} else {

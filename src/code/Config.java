@@ -8,7 +8,7 @@ import java.io.PrintWriter;
 public class Config {
 	
 	public static int practiceTrialCount = 60;
-	public static int experimentalTrialCount = 250;
+	public static int experimentalTrialCount = 240;
 	public static int breakDuration = 120000;
 	
 	public static void load() {
