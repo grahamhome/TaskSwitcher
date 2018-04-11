@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import code.TaskData.BlockType;
@@ -38,8 +39,9 @@ public class ResultsReporter {
 					blockResults = new BlockResults();
 					currentBlockType = trial.type;
 				}
-				blockResults.trials.add(trial);
-			}
+				if (trial.index > 1) { // First trial in each block is excluded from analyses
+					blockResults.trials.add(trial);
+				}			}
 			task = task.next;
 		}
 		blockResultsString.append(System.lineSeparator());
@@ -71,12 +73,15 @@ public class ResultsReporter {
 			float count = trials.stream().filter((t) -> t.useInResponse && t.switching).count();
 			AtomicLong totalSwitch = new AtomicLong(0);
 			trials.stream().filter((t) -> t.useInResponse && t.switching).forEach((t) -> {totalSwitch.getAndAdd(t.time);});
-			results.append(count>0 ? String.format("%.3f", ((float)totalSwitch.get())/count) : "0.000").append(",");
+			float avgSwitchTime = count>0 ? ((float)totalSwitch.get())/count : 0;
+			results.append(avgSwitchTime>0 ? String.format("%.3f", avgSwitchTime) : "0.000").append(",");
 			// Calculate avg response time of non-switch trials
 			count = trials.stream().filter((t) -> t.useInResponse && !t.switching).count();
 			AtomicLong totalNonSwitch = new AtomicLong(0);
-			trials.stream().filter((t) -> t.useInResponse && !t.switching).forEach((t) -> {totalNonSwitch.getAndAdd(t.time);});
-			results.append(count>0 ? String.format("%.3f", ((float)totalNonSwitch.get())/count) : "0.000").append(",");
+			AtomicInteger nonSwitchCount = new AtomicInteger(0);
+			trials.stream().filter((t) -> t.useInResponse && !t.switching).forEach((t) -> {totalNonSwitch.getAndAdd(t.time); nonSwitchCount.getAndIncrement(); });
+			float avgNonSwitchTime = count>0 ? ((float)totalNonSwitch.get())/count : 0;
+			results.append(avgNonSwitchTime>0 ? String.format("%.3f", avgNonSwitchTime) : "0.000").append(",");
 			// Calculate avg response time of congruent trials
 			count = trials.stream().filter((t) -> t.useInResponse && t.congruent).count();
 			AtomicLong total = new AtomicLong(0);
@@ -99,10 +104,11 @@ public class ResultsReporter {
 			results.append(trials.stream().filter((t) -> t.useInError && !t.congruent && t.result.equals(Result.INCORRECT)).count()).append(",").append(System.lineSeparator());
 			results.append("switch cost").append(System.lineSeparator());
 			// Calculate switch cost
-			results.append(String.format("%.3f", (float)(totalSwitch.get()-totalNonSwitch.get()))).append(System.lineSeparator());
+			float switchCost = avgSwitchTime-avgNonSwitchTime;
+			results.append(String.format("%.3f", switchCost)).append(System.lineSeparator());
 			results.append("proportional switch cost:").append(System.lineSeparator());
-			// Calculate non-switch cost
-			results.append(totalNonSwitch.get() > 0 ? String.format("%.3f", ((((float)totalSwitch.get()-totalNonSwitch.get()))/((float)totalNonSwitch.get()))*100) : "0.000").append(System.lineSeparator());
+			// Calculate proportional switch cost
+			results.append(avgNonSwitchTime>0 ? String.format("%.3f", (float)(switchCost/avgNonSwitchTime)*100) : "0.000").append(System.lineSeparator());
 			results.append("percentage of trials removed from error statistics:").append(System.lineSeparator());
 			// Calculate % of trials removed from error statistics
 			count = trials.size();

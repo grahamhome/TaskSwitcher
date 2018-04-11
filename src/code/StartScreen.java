@@ -62,7 +62,7 @@ public class StartScreen extends HBox {
 		type2.setUserData(2);
 		type2.setToggleGroup(experimentType);
 		HBox typeBox = new HBox(10, typeLabel, type1, type2);
-		Label practiceTrialCountLabel = new Label("Practice trials\n(multiple of 2):");
+		Label practiceTrialCountLabel = new Label("Practice trials\n(multiple of 4):");
 		practiceTrialCountLabel.setMinWidth(Region.USE_PREF_SIZE);
 		practiceTrialCountLabel.setAlignment(Pos.CENTER_LEFT);
 		TextField practiceTrialCountField = new TextField();
@@ -72,7 +72,7 @@ public class StartScreen extends HBox {
 		HBox practiceTrialCountBox = new HBox(10, practiceTrialCountLabel, practiceTrialCountField);
 		practiceTrialCountBox.setMaxHeight(Region.USE_PREF_SIZE);
 		practiceTrialCountBox.setAlignment(Pos.CENTER_LEFT);
-		Label experimentTrialCountLabel = new Label("Experiment trials\n(multiple of 2):");
+		Label experimentTrialCountLabel = new Label("Experiment trials\n(multiple of 4):");
 		experimentTrialCountLabel.setMinWidth(Region.USE_PREF_SIZE);
 		experimentTrialCountLabel.setAlignment(Pos.CENTER_LEFT);
 		TextField experimentTrialCountField = new TextField();
